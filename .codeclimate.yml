@@ -1,0 +1,18 @@
+engines:
+  eslint:
+    enabled: true
+  duplication:
+    enabled: false
+    config:
+      languages:
+      - javascript
+ratings:
+  paths:
+  - "**.js"
+exclude_paths:
+- test/
+- coverage/
+- node_modules/
+- LICENSE
+- README.md
+- package.json
