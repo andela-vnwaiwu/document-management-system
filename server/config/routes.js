@@ -2,8 +2,8 @@ import users from '../controllers/api/users';
 
 const routes = (router) => {
   router
-    .route('/')
-    .get(users.findAll);
+    .route('/users')
+      .get(users.findAll);
 };
 
 
