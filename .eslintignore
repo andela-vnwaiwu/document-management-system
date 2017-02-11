@@ -10,3 +10,5 @@ LICENSE
 README.md
 package.json
 dist/*
+server/models/*
+server/db/*
