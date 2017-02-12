@@ -26,9 +26,9 @@ const users = {
       }
     }).then((returnedUser) => {
       if (returnedUser) {
-        return res.status(409).json({ 
+        return res.status(409).json({
           message: `User with ${req.body.email} already exists`
-        })
+        });
       }
       db.User.create({
         username: req.body.username,
@@ -43,50 +43,32 @@ const users = {
           RoleId: user.RoleId
         }, secretKey, { expiresIn: 3600 });
         user = userAttributes(user);
-        return res.status(201).json({ token, expiresIn: 3600, user })
+        return res.status(201).json({ token, expiresIn: 3600, user });
       })
-      .catch((error) => {
-        return res.status(400).json(error.errors);
-      });
+      .catch(error => res.status(400).json(error.errors));
     });
   },
 
   login: (req, res) => {
-    db.User.findOne({ where: { email: req.body.email }}).then((user) => {
+    db.User.findOne({ where: { email: req.body.email } }).then((user) => {
       if (user && user.matchPassword(req.body.password)) {
         const token = jwt.sign({
           userId: user.id,
           RoleId: user.RoleId
         }, secretKey, { expiresIn: 3600 });
         user = userAttributes(user);
-        return res.status(302).json({ token, expiresIn: 86400, user})
+        return res.status(302).json({ token, expiresIn: 86400, user });
       }
-      return res.status(401).json({ message: 'Failed to authenticate user'})
-    })
+      return res.status(401).json({ message: 'Failed to authenticate user' });
+    });
   },
 
   logout: (req, res) => {
     const token = req.headers.authorization || req.headers['x-access-token'];
     if (!token) {
-      return res.status(400).json({ message: 'User not logged in before'})
+      return res.status(400).json({ message: 'User not logged in before' });
     }
-    return res.status(200).json({ message: 'User successfully logged out'})
-  },
-
-  findAll: (req, res) => {
-    
-  },
-
-  findOne: (req, res) => {
-    
-  },
-
-  updateOne: (req, res) => {
-
-  },
-
-  remove: (req, res) => {
-
+    return res.status(200).json({ message: 'User successfully logged out' });
   }
 };
 
