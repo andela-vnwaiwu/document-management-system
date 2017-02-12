@@ -30,7 +30,6 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.INTEGER
     }
   }, {
-    underscored: true,
     classMethods: {
       associate: function (models) {
         User.belongsTo(models.Role, {
