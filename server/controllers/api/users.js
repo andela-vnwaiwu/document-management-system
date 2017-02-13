@@ -68,7 +68,7 @@ const users = {
     if (!token) {
       return res.status(400).json({ message: 'User not logged in before' });
     }
-    return res.status(200).json({ message: 'User successfully logged out' });
+    return res.status(302).json({ message: 'User successfully logged out' });
   }
 };
 

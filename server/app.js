@@ -27,7 +27,7 @@ const normalizePort = (val) => {
   return false;
 };
 
-const port = normalizePort(process.env.PORT || '3000');
+const port = normalizePort(process.env.PORT || 8080);
 app.set('port', port);
 
 const server = http.createServer(app);
@@ -73,8 +73,10 @@ db.sequelize
     server.listen(port);
     server.on('error', onError);
     server.on('listening', onListening);
-    console.log('Database connection successful');
+    console.log('Database connection to ',process.env.NODE_ENV, ' successful');
   })
   .catch((error) => {
     console.log('Error creating connection:', error);
   });
+
+export default app;
