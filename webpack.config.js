@@ -1,4 +1,7 @@
+import dotenv from 'dotenv';
 import webpack from 'webpack';
+
+dotenv.config();
 
 process.env.NODE_ENV = process.env.NODE_ENV || "development";
 
@@ -27,6 +30,7 @@ module.exports = {
         test: /\.js$/,
         loader: 'babel-loader',
         include: `${__dirname}/client`,
+        exclude: /node_modules/,
         query: {
           "env": {
             "development": {
