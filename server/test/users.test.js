@@ -1,131 +1,217 @@
+import dotenv from 'dotenv';
 import 'babel-polyfill';
 import chai from 'chai';
+import jwt from 'jsonwebtoken';
 import supertest from 'supertest';
 import app from '../app';
 import factory from './factory';
 import db from '../models/';
 
+dotenv.config();
+
+const secretKey = process.env.JWT_SECRET_KEY || 'jhebefuehf7yu3832978ry09iofe';
+
 const expect = chai.expect;
 const request = supertest(app);
-const agent = supertest.agent(app);
 
-let user, token;
+let user, token, secondUser, thirdUser, updateDetails;
 
 describe('User Suite', () => {
   before(() => {
     db.User.destroy({ where: {} });
     user = factory.users;
+    secondUser = factory.secondUser;
+    thirdUser = factory.thirdUser;
+    updateDetails = factory.updateDetails
   });
 
   after(() => db.User.destroy({ where: {} }));
 
-  describe('Create Users POST: /users', () => {
-    it('should successfully create a new user on succesful registration',
-      (done) => {
-        request
-          .post('/api/users/signup')
-          .send(user)
-          .end((err, res) => {
-            if (err) return done(err);
-            expect(res.status).to.equal(201);
-            expect(res.token).to.be.defined;
-            done();
-          });
-      });
-    it('should return an error when the signup form is missing a field',
-      (done) => {
-        request
-          .post('/api/users/signup')
-          .send({
-            username: 'faker',
-            lastName: 'factory',
-            email: 'factory@email.com',
-            password: 'password',
-            RoleId: 1
-          })
-          .end((err, res) => {
-            if (err) return done(err);
-            expect(res.status).to.equal(400);
-            done();
-          });
-      });
-    it('should return an error when an existing user registers again',
-      (done) => {
-        request
-          .post('/api/users/signup')
-          .send(user)
-          .end((err, res) => {
-            if (err) return done(err);
-            expect(res.status).to.equal(409);
-            done();
-          });
-      });
-
-    describe('Logs in User POST: /users/login', () => {
-      it('should successfully log in a registered user', (done) => {
-        request
-          .post('/api/users/login')
-          .send({ email: user.email, password: user.password })
-          .end((err, res) => {
-            if (err) return done(err);
-            expect(res.status).to.equal(302);
-            expect(res.token).to.be.defined;
-            done();
-          });
-      });
-      it('should return an error if the password field is empty', (done) => {
-        request
-          .post('/api/users/login')
-          .send({ email: user.email, password: '' })
-          .end((err, res) => {
-            if (err) return done(err);
-            expect(res.status).to.equal(401);
-            done();
-          });
-      });
-      it('should return an error if the email field is empty', (done) => {
-        request
-          .post('/api/users/login')
-          .send({ email: '', password: user.password })
-          .end((err, res) => {
-            if (err) return done(err);
-            expect(res.status).to.equal(401);
-            done();
-          });
-      });
+  describe('Get All Users GET: /api/users', () => {
+    before((done) => {
+      request
+        .post('/api/users/signup')
+        .send(user)
+        .end((err, res) => {
+          token = res.body.token;
+          done();
+        });
     });
 
-    describe('Logs out user POST: /users/logout', () => {
-      before((done) => {
+    it('should successfully get all users if the user has admin role',
+      (done) => {
         request
-          .post('/api/users/login')
-          .send({ email: user.email, password: user.password })
+          .get('/api/users/')
+          .set('authorization', token)
           .end((err, res) => {
             if (err) return done(err);
-            token = res.body.token;
+            expect(res.status).to.equal(200);
             done();
           });
       });
-      it('should successfully logout the user if they are logged in',
-        (done) => {
-          agent
-            .post('/api/users/logout')
-            .set('Authorization', token)
+    it('should return an error if no token is passed', (done) => {
+      request
+        .get('/api/users')
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(401);
+          done();
+        });
+    });
+    it('should return an error if the user is not an admin', (done) => {
+      request
+        .post('/api/users/signup')
+        .send(secondUser)
+        .end((err, res) => {
+          if (err) return done(err);
+          request
+            .get('/api/users')
+            .set('authorization', res.body.token)
             .end((err, res) => {
               if (err) return done(err);
-              expect(res.status).to.equal(302);
+              expect(res.status).to.equal(403);
               done();
             });
         });
-      it('should return an error when non-logged in user tries to log out',
-        (done) => {
-          request
-            .post('/api/users/logout')
-            .end((err, res) => {
-              if (err) return done(err);
-              expect(res.status).to.equal(400);
-              done();
-            });
+      });
+  });
+
+  describe('Get User GET: /api/users/:id', () => {
+    let thirdUserToken;
+    before((done) => {
+      request
+        .post('/api/users/signup')
+        .send(thirdUser)
+        .end((err, res) => {
+          if (err) return done(err);
+          thirdUserToken = res.body.token;
+          done();
+        });
+    });
+    it('returns the details of the particular user', (done) => {
+      request
+        .get('/api/users/2')
+        .set('authorization', thirdUserToken)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(200);
+          expect(res.body.user).to.be.an('object');
+          done();
+        });
+    });
+    it('should return not found if the user has not been saved', (done) => {
+      request
+        .post('/api/users/5')
+        .send('authorization', thirdUserToken)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(404);
+          done();
+        });
+    });
+    it('should return an error if the user is not logged in', (done) => {
+      request
+        .get('/api/users/2')
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(401);
+          done();
+        });
+    });
+  });
+
+  describe('Update user PUT: /api/users/:id', () => {
+    let userId, secondToken;
+    before((done) => {
+      jwt.verify(token, secretKey, (err, result) => {
+        userId = result.userId;
+      });
+      request
+        .post('/api/users/login')
+        .send(secondUser)
+        .end((err, res) => {
+          secondToken = res.body.token;
+          done();
+        });
+    });
+
+    it('should update the user\'s details for the admin or owner', (done) => {
+      request
+        .put(`/api/users/${userId}`)
+        .set('authorization', token)
+        .send(updateDetails)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(200);
+          expect(res.body.user).to.be.an('object');
+          done();
+        });
+    });
+    it('should return an error when trying to update a non-existing user', (done) => {
+      request
+        .put(`/api/users/${userId * 2}`)
+        .set('authorization', token)
+        .send(updateDetails)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(404);
+          expect(res.body.user).to.be.an('object');
+          done();
+        });
+    });
+    it('returns an error if the user is not an admin or owner', (done) => {
+      request
+        .put(`/api/users/${userId}`)
+        .set('authorization', secondToken )
+        .send(updateDetails)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(403);
+          expect(res.body.user).to.be.an('object');
+          done();
+        });
+    });
+  });
+
+  describe('Delete User DELETE: /api/users/:id', () => {
+    let deleteUser;
+    before((done) => {
+      request
+        .post('/api/users/login')
+        .send(secondUser)
+        .end((err, res) => {
+          deleteUser = res.body.user.id;
+          done();
+        });
+    });
+    it('should return an error if the user does not have admin role', (done) => {
+      request
+        .delete(`/api/users/${deleteUser}`)
+        .set('Authorization', token)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(403);
+          done();
+        });
+    });
+    it('should delete another user if the user has a role admin', (done) => {
+      request
+        .delete(`/api/users/${deleteUser}`)
+        .set('Authorization', token)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(200);
+          done();
+        });
+    });
+    it('should return an error if the user does not exist', (done) => {
+      request
+        .delete(`/api/users/${deleteUser}`)
+        .set('Authorization', token)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(404);
+          done();
         });
     });
   });
