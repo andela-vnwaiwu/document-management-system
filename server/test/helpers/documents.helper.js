@@ -1,4 +1,5 @@
 /* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
+/* eslint import/no-unresolved: 0 */
 import faker from 'faker';
 
 const documents = {

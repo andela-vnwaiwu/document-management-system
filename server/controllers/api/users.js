@@ -49,9 +49,7 @@ const users = {
         user = userAttributes(user);
         return res.status(201).json({ token, expiresIn: 3600, user });
       })
-      .catch((error) => {
-        return res.status(400).json(error.errors);
-      });
+      .catch(error => res.status(400).json(error.errors));
     });
   },
 
@@ -77,21 +75,13 @@ const users = {
     return res.status(302).json({ message: 'User successfully logged out' });
   },
 
-  findAll: (req, res) => {
-    return res.status(200).json({ message: 'I was called for all users' });
-  },
+  findAll: (req, res) => res.status(200).json({ message: 'I was called for all users' }),
 
-  findOne: (req, res) => {
-    return res.status(200).json({ message: 'Found this user'});
-  },
+  findOne: (req, res) => res.status(200).json({ message: 'Found this user' }),
 
-  updateOne: (req, res) => {
-    return res.status(200).json({ message: 'updated user successfully'});
-  },
+  updateOne: (req, res) => res.status(200).json({ message: 'updated user successfully' }),
 
-  remove: (req, res) => {
-    return res.status(200).json({ message: 'User successfully deleted'});
-  }
+  remove: (req, res) => res.status(200).json({ message: 'User successfully deleted' })
 };
 
 export default users;

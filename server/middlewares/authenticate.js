@@ -1,3 +1,4 @@
+/* eslint import/no-unresolved: 0 */
 import jwt from 'jsonwebtoken';
 import db from '../models';
 
