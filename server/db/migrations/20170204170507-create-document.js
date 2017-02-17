@@ -25,8 +25,8 @@ module.exports = {
         defaultValue: 'public',
         type: Sequelize.STRING
       },
-      CategoryId: {
-        type: Sequelize.INTEGER
+      tags: {
+        type: Sequelize.ARRAY(Sequelize.TEXT)
       },
       createdAt: {
         allowNull: false,
