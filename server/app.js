@@ -73,7 +73,7 @@ db.sequelize
     server.listen(port);
     server.on('error', onError);
     server.on('listening', onListening);
-    console.log('Database connection to ',process.env.NODE_ENV, ' successful');
+    console.log('Database connection to ', process.env.NODE_ENV, ' successful');
   })
   .catch((error) => {
     console.log('Error creating connection:', error);
