@@ -9,7 +9,7 @@
     "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
     "start": "npm-run-all --parallel serve",
     "serve": "babel-watch ./server/app.js",
-    "migrate": "sequelize db:migrate"
+    "migration": "sequelize db:migrate"
   },
   "repository": {
     "type": "git",
