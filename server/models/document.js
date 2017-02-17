@@ -17,8 +17,8 @@ module.exports = function (sequelize, DataTypes) {
       defaultValue: 'public',
       type: DataTypes.STRING
     },
-    CategoryId: {
-      type: DataTypes.INTEGER
+    tags: {
+      type: DataTypes.ARRAY(DataTypes.TEXT)
     }
   }, {
     classMethods: {
@@ -27,10 +27,6 @@ module.exports = function (sequelize, DataTypes) {
           as: 'Owner',
           onDelete: 'CASCADE',
           foreignKey: 'OwnerId'
-        });
-        Document.belongsTo(models.Category, {
-          onDelete: 'CASCADE',
-          foreignKey: 'CategoryId'
         });
       }
     }
