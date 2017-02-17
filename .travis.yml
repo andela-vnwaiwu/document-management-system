@@ -1,17 +1,23 @@
-sudo: required  
+sudo: required
 dist: trusty
 language: node_js
-
 node_js:
-  - 6
-
-before_install:  
- - export CHROME_BIN=/usr/bin/google-chrome
- - export DISPLAY=:99.0
- - sh -e /etc/init.d/xvfb start
- - sudo apt-get update
- - sudo apt-get install -y libappindicator1 fonts-liberation
- - wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
- - sudo dpkg -i google-chrome*.deb
-
-after_script: cat ./coverage/**/lcov.info | ./node_modules/.bin/coveralls
+  - node
+before_install:
+  - export CHROME_BIN=/usr/bin/google-chrome
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+services:
+  - postgresql
+before_script:
+  - psql -c 'drop database if exists dmstestvault;' -U postgres
+  - psql -c 'create database dmstestvault;' -U postgres
+  - NODE_ENV=test npm run migration
+script:
+  - npm test
+after_success:
+  - npm run coveralls
+addons:
+  postgresql: "9.3"
+after_failure:
+  - npm run coveralls
