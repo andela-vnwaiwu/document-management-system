@@ -1,4 +1,5 @@
 /* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": false }] */
+/* eslint import/no-unresolved: 0 */
 import bodyParser from 'body-parser';
 import express from 'express';
 import logger from 'morgan';
@@ -10,11 +11,13 @@ import DashboardPlugin from 'webpack-dashboard/plugin';
 import config from '../../webpack.config';
 
 import routes from './routes';
+import authenticate from '../middlewares/authenticate';
+
 
 const app = express();
 const router = express.Router();
 
-routes(router);
+routes(router, authenticate);
 
 const compiler = webpack(config);
 // Apply CLI dashboard for your webpack dev server

@@ -18,6 +18,7 @@ const userAttributes = (user) => {
   return attributes;
 };
 
+
 const users = {
   create: (req, res) => {
     db.User.findOne({
@@ -38,10 +39,13 @@ const users = {
         password: req.body.password,
         RoleId: req.body.RoleId
       }).then((user) => {
-        const token = jwt.sign({
-          UserId: user.id,
-          RoleId: user.RoleId
-        }, secretKey, { expiresIn: 3600 });
+        const jwtData = {
+          username: user.username,
+          email: user.email,
+          RoleId: user.RoleId,
+          userId: user.id
+        };
+        const token = jwt.sign(jwtData, secretKey, { expiresIn: 3600 });
         user = userAttributes(user);
         return res.status(201).json({ token, expiresIn: 3600, user });
       })
@@ -68,8 +72,16 @@ const users = {
     if (!token) {
       return res.status(400).json({ message: 'User not logged in before' });
     }
-    return res.status(200).json({ message: 'User successfully logged out' });
-  }
+    return res.status(302).json({ message: 'User successfully logged out' });
+  },
+
+  findAll: (req, res) => res.status(200).json({ message: 'I was called for all users' }),
+
+  findOne: (req, res) => res.status(200).json({ message: 'Found this user' }),
+
+  updateOne: (req, res) => res.status(200).json({ message: 'updated user successfully' }),
+
+  remove: (req, res) => res.status(200).json({ message: 'User successfully deleted' })
 };
 
 export default users;
