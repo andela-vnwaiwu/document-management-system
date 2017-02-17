@@ -1,10 +1,15 @@
+/* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
+/* eslint import/no-unresolved: 0 */
+/* eslint import/extensions: 0 */
+/* eslint no-unused-expressions: 0 */
+/* eslint no-unused-vars: ["error", { "args": "none" }] */
 import dotenv from 'dotenv';
 import 'babel-polyfill';
 import chai from 'chai';
 import jwt from 'jsonwebtoken';
 import supertest from 'supertest';
 import app from '../app';
-import factory from './factory';
+import factory from '././helpers/factory.helpers';
 import db from '../models/';
 
 dotenv.config();
@@ -22,7 +27,7 @@ describe('User Suite', () => {
     user = factory.users;
     secondUser = factory.secondUser;
     thirdUser = factory.thirdUser;
-    updateDetails = factory.updateDetails
+    updateDetails = factory.updateDetails;
   });
 
   after(() => db.User.destroy({ where: {} }));
@@ -73,7 +78,7 @@ describe('User Suite', () => {
               done();
             });
         });
-      });
+    });
   });
 
   describe('Get User GET: /api/users/:id', () => {
@@ -162,7 +167,7 @@ describe('User Suite', () => {
     it('returns an error if the user is not an admin or owner', (done) => {
       request
         .put(`/api/users/${userId}`)
-        .set('authorization', secondToken )
+        .set('authorization', secondToken)
         .send(updateDetails)
         .end((err, res) => {
           if (err) return done(err);
