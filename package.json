@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "build": "webpack -w",
-    "test": "NODE_ENV=test mocha --compilers js:babel-core/register server/test",
+    "test": "NODE_ENV=test babel-node ./node_modules/babel-istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec server/test",
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
     "start": "npm-run-all --parallel serve",
     "serve": "babel-watch ./server/app.js"
   },
@@ -74,6 +75,7 @@
   },
   "devDependencies": {
     "babel-eslint": "^7.1.1",
+    "babel-istanbul": "^0.12.1",
     "babel-loader": "^6.2.10",
     "babel-plugin-react-transform": "^2.0.2",
     "babel-plugin-transform-runtime": "^6.22.0",
@@ -83,6 +85,8 @@
     "babel-watch": "^2.0.6",
     "bluebird": "^3.4.7",
     "chai": "^3.5.0",
+    "cover": "^0.2.9",
+    "coveralls": "^2.11.16",
     "css-loader": "^0.26.1",
     "factory-girl": "^4.1.0",
     "faker": "^3.1.0",
