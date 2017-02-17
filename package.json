@@ -70,7 +70,7 @@
     "serve-favicon": "~2.3.0",
     "should": "^11.2.0",
     "supertest": "^3.0.0",
-    "webpack": "^2.1.0-beta.22",
+    "webpack": "2.1.0-beta.22",
     "webpack-dashboard": "^0.3.0",
     "webpack-dev-middleware": "^1.10.0",
     "webpack-hot-middleware": "^2.16.1"
