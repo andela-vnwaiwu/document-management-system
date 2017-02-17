@@ -1,8 +1,9 @@
+/* eslint no-unused-expressions: 0 */
 import 'babel-polyfill';
 import chai from 'chai';
 import supertest from 'supertest';
 import app from '../app';
-import factory from './factory';
+import factory from './helpers/factory.helpers';
 import db from '../models/';
 
 const expect = chai.expect;
