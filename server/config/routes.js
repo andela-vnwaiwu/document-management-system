@@ -1,13 +1,18 @@
 import users from '../controllers/api/users';
 
-const routes = (router) => {
+const routes = (router, authenticate) => {
+  // Users routes
   router.post('/users/login', users.login);
   router.post('/users/signup', users.create);
   router.post('/users/logout', users.logout);
-  router.get('/users', users.findAll);
-  router.get('/users/:id', users.findOne);
-  router.put('/users/:id', users.updateOne);
-  router.delete('/users/:id', users.remove);
+
+  router.get('/users', authenticate.verifyToken, authenticate.isAdmin, users.findAll);
+
+  router
+    .route('/users/:id')
+      .get(authenticate.verifyToken, users.findOne)
+      .put(authenticate.verifyToken, authenticate.hasPermission, users.updateOne)
+      .delete(authenticate.verifyToken, authenticate.isAdmin, users.remove);
 };
 
 
