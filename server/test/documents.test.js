@@ -2,7 +2,7 @@
 /* eslint import/no-unresolved: 0 */
 /* eslint import/extensions: 0 */
 /* eslint no-unused-expressions: 0 */
-/* eslint no-unused-vars: ["error", { "args": "none" }] */
+/* eslint no-unused-vars: [2, { "args": "none" }] */
 import dotenv from 'dotenv';
 import 'babel-polyfill';
 import chai from 'chai';
