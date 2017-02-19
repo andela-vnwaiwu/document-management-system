@@ -1,4 +1,4 @@
-/* eslint no-console: [1, { allow: ["warn", "error", "log"] }] */
+/* eslint no-console: 0 */
 
 import dotenv from 'dotenv';
 import debug from 'debug';

@@ -1,4 +1,4 @@
-/* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
+/* eslint import/no-extraneous-dependencies: 0 */
 /* eslint import/no-unresolved: 0 */
 /* eslint import/extensions: 0 */
 /* eslint no-unused-expressions: 0 */

@@ -1,4 +1,4 @@
-/* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": false }] */
+/* eslint import/no-extraneous-dependencies: 0 */
 /* eslint import/no-unresolved: 0 */
 import bodyParser from 'body-parser';
 import express from 'express';
