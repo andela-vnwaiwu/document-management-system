@@ -2,20 +2,34 @@ module.exports = function (sequelize, DataTypes) {
   var Document = sequelize.define('Document', {
     title: {
       type: DataTypes.STRING,
-      allowNull: false
-
+      allowNull: false,
+      validate: {
+        notEmpty: {
+          msg: 'Title field cannot be empty'
+        }
+      }
     },
     content: {
       type: DataTypes.TEXT,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        notEmpty: {
+          msg: 'Title field cannot be empty'
+        }
+      }
     },
     OwnerId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        isInt: {
+          msg: 'OwnerId must be an integer'
+        }
+      }
     },
-    access: {
-      defaultValue: 'public',
-      type: DataTypes.STRING
+    isPublic: {
+      defaultValue: true,
+      type: DataTypes.BOOLEAN
     },
     tags: {
       type: DataTypes.ARRAY(DataTypes.TEXT)

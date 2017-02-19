@@ -21,9 +21,9 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false
       },
-      access: {
-        defaultValue: 'public',
-        type: Sequelize.STRING
+      isPublic: {
+        defaultValue: true,
+        type: Sequelize.BOOLEAN
       },
       tags: {
         type: Sequelize.ARRAY(Sequelize.TEXT)
