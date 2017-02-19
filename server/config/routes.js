@@ -1,3 +1,4 @@
+/* eslint import/no-unresolved: 0 */
 import users from '../controllers/api/users';
 import documents from '../controllers/api/documents';
 

@@ -1,3 +1,4 @@
+/* eslint import/no-unresolved: 0 */
 import db from '../../models/';
 
 const docAttributes = (doc) => {
