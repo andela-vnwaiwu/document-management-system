@@ -21,12 +21,14 @@ let user, secondUser, thirdUser, token, document1, document2, badDocument;
 let privateDoc, adminDoc;
 
 describe('Document suite', () => {
+  let userResult1;
   before((done) => {
     db.User.destroy({ where: {} });
     user = factory.users;
     secondUser = factory.secondUser;
     thirdUser = factory.thirdUser;
     document1 = sampleDoc.first;
+    document2 = sampleDoc.second;
     badDocument = sampleDoc.badDoc;
     privateDoc = sampleDoc.third;
     request
@@ -34,13 +36,13 @@ describe('Document suite', () => {
       .send(user)
       .end((err, res) => {
         token = res.body.token;
-
+        userResult1 = res.body.user;
         request
           .post('/api/documents')
           .send(document1)
-          .set('authrization', token)
+          .set('authorization', token)
           .end((err, res) => {
-            adminDoc = res.body.document;
+            adminDoc = res.body;
             done();
           });
       });
@@ -58,10 +60,9 @@ describe('Document suite', () => {
         .send(document1)
         .set('authorization', token)
         .end((err, res) => {
-          expect(res.status).to.equal(201);
-          expect(res.body.document).to.be.defined;
-          expect(res.body.document).to.be.an('object');
-          expect(res.body.document.title).to.be.defined;
+          expect(res.status).to.equal(200);
+          expect(res.body).to.be.defined;
+          expect(res.body.title).to.be.defined;
           done();
         });
     });
@@ -72,6 +73,7 @@ describe('Document suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(401);
+          done();
         });
     });
     it('should return an error if any field is missing', (done) => {
@@ -82,6 +84,7 @@ describe('Document suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(400);
+          done();
         });
     });
   });
@@ -110,16 +113,16 @@ describe('Document suite', () => {
         .set('authorization', token)
         .end((err, res) => {
           expect(res.status).to.equal(200);
-          expect(Object.keys(res.body.documents)).to.equal(2);
+          expect(res.body.length).to.be.defined;
           done();
         });
     });
-    it('returns an error if the user is not an admin', (done) => {
+    it('returns document that belongs to the user and are public', (done) => {
       request
         .get('/api/documents')
         .set('authorization', secondToken)
         .end((err, res) => {
-          expect(res.status).to.equal(403);
+          expect(res.status).to.equal(200);
           done();
         });
     });
@@ -134,30 +137,14 @@ describe('Document suite', () => {
   });
 
   describe('Get Document GET: /api/documents/:id', () => {
-    let secondToken, result2, documentResult;
+    let secondToken, result2;
     before((done) => {
-      request
-        .post('/api/documents')
-        .send(privateDoc)
-        .set('authorization', token)
-        .end((err, res) => {
-          if (err) done(err);
-          result2 = res.body.document;
-        });
       request
         .post('/api/users/login')
         .send(secondUser)
         .end((err, res) => {
           secondToken = res.body.token;
-          request
-            .post('/api/documents')
-            .send(document2)
-            .set('authorization', secondToken)
-            .end((err, res) => {
-              if (err) done(err);
-              documentResult = res.body.document;
-              done();
-            });
+          done();
         });
     });
     it('returns the document if the document has public access', (done) => {
@@ -167,24 +154,48 @@ describe('Document suite', () => {
         .end((err, res) => {
           if (err) done(err);
           expect(res.status).to.equal(200);
+          done();
         });
     });
     it('returns an error if the document has private access', (done) => {
+      privateDoc.OwnerId = userResult1.id;
       request
-        .get(`/api/documents/${result2.id}`)
-        .set('authorization', secondToken)
+        .post('/api/documents')
+        .send(privateDoc)
+        .set('authorization', token)
         .end((err, res) => {
           if (err) done(err);
-          expect(res.status).to.equal(403);
+          result2 = res.body;
+          request
+            .get(`/api/documents/${result2.id}`)
+            .set('authorization', secondToken)
+            .end((err, res) => {
+              if (err) done(err);
+              expect(res.status).to.equal(403);
+              done();
+            });
         });
     });
     it('returns the document if the document belongs to the user', (done) => {
       request
-        .get(`/api/documents/${documentResult.id}`)
-        .set('authorization', secondToken)
+        .post('/api/users/login')
+        .send(secondUser)
         .end((err, res) => {
-          if (err) done(err);
-          expect(res.status).to.equal(200);
+          request
+            .post('/api/documents')
+            .send(privateDoc)
+            .set('authorization', res.body.token)
+            .end((err, res) => {
+              const doc = res.body;
+              request
+                .get(`/api/documents/${doc.id}`)
+                .set('authorization', secondToken)
+                .end((err, res) => {
+                  if (err) done(err);
+                  expect(res.status).to.equal(200);
+                  done();
+                });
+            });
         });
     });
   });
@@ -202,7 +213,7 @@ describe('Document suite', () => {
             .send(document1)
             .set('authorization', userToken)
             .end((err, res) => {
-              result = res.body.document;
+              result = res.body;
               done();
             });
         });
@@ -215,7 +226,6 @@ describe('Document suite', () => {
         .end((err, res) => {
           if (err) done(err);
           expect(res.status).to.equal(200);
-          expect(res.body.document).to.be.defined;
           done();
         });
     });
@@ -267,7 +277,7 @@ describe('Document suite', () => {
             .send(document1)
             .set('authorization', userToken)
             .end((err, res) => {
-              userResult = res.body.document;
+              userResult = res.body;
               done();
             });
         });
@@ -333,7 +343,7 @@ describe('Document suite', () => {
             .send(document1)
             .set('authorization', userToken)
             .end((err, res) => {
-              userResult = res.body.document;
+              userResult = res.body;
               done();
             });
         });
@@ -353,7 +363,7 @@ describe('Document suite', () => {
         .delete(`/api/documents/${adminDoc.id}`)
         .end((err, res) => {
           if (err) return done(err);
-          expect(res.status).to.equal(403);
+          expect(res.status).to.equal(401);
           done();
         });
     });
@@ -363,7 +373,7 @@ describe('Document suite', () => {
         .set('authorization', token)
         .end((err, res) => {
           if (err) return done(err);
-          expect(res.status).to.equal(204);
+          expect(res.status).to.equal(200);
           done();
         });
     });
@@ -373,7 +383,7 @@ describe('Document suite', () => {
         .set('authorization', token)
         .end((err, res) => {
           if (err) return done(err);
-          expect(res.status).to.equal(204);
+          expect(res.status).to.equal(200);
           done();
         });
     });
