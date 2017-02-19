@@ -75,13 +75,60 @@ const users = {
     return res.status(302).json({ message: 'User successfully logged out' });
   },
 
-  findAll: (req, res) => res.status(200).json({ message: 'I was called for all users' }),
+  findAll: (req, res) => {
+    db.User.findAll({
+      attributes: [
+        'id',
+        'username',
+        'firstName',
+        'lastName',
+        'email',
+        'RoleId',
+        'createdAt',
+        'updatedAt'
+      ]
+    }).then((result) => {
+      return res.status(200).json({ users: result });
+    });
+  },
 
-  findOne: (req, res) => res.status(200).json({ message: 'Found this user' }),
+  findOne: (req, res) => {
+    const userId = req.params.id;
+    db.User.findById(userId).then((user) => {
+      if (!user) {
+        return res.status(404).json({ message: 'No user with Id found' });
+      }
+      user = userAttributes(user);
+      return res.status(200).json(user);
+    });
+  },
 
-  updateOne: (req, res) => res.status(200).json({ message: 'updated user successfully' }),
+  updateOne: (req, res) => {
+    const userId = req.params.id;
+    db.User.findById(userId).then((user) => {
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      user.update(req.body).then((result) => {
+        const updatedUser = userAttributes(result);
+        return res.status(200).json({ user: updatedUser });
+      });
+    });
+  },
 
-  remove: (req, res) => res.status(200).json({ message: 'User successfully deleted' })
+  remove: (req, res) => {
+    const userId = req.params.id;
+    db.User.destroy({
+      where: {
+        id: userId
+      }
+    }).then((user) => {
+      if (!user) {
+        return res.status(404).json({ message: 'No user found to delete' });
+      }
+      return res.status(200).json({ message: 'User successfully deleted' });
+    });
+  }
 };
 
 export default users;

@@ -32,7 +32,7 @@ const Authenticate = {
     });
   },
 
-  hasPermission(req, res, next) {
+  userPermission(req, res, next) {
     const userId = req.params.id;
     const ownerId = req.decoded.userId;
     const roleId = req.decoded.RoleId;
@@ -51,12 +51,36 @@ const Authenticate = {
     });
   },
 
+  viewPermission(req, res, next) {
+    const docId = req.params.id;
+    const userId = req.decoded.userId;
+    const roleId = req.decoded.RoleId;
+    db.Role.findById(roleId).then((role) => {
+      if (role && role.title === 'admin') {
+        next();
+      } else if (docId) {
+        db.Document.findById(docId).then((doc) => {
+          if (doc) {
+            if (doc.isPublic || doc.OwnerId === userId) {
+              next();
+            } else {
+              return res.status(403)
+                .send({ message: 'You are not allowed to view this document' });
+            }
+          }
+        });
+      } else {
+        next();
+      }
+    });
+  },
+
   docPermission(req, res, next) {
     const docId = req.params.id;
     const userId = req.decoded.userId;
     const roleId = req.decoded.RoleId;
     db.Document.findById(docId).then((doc) => {
-      if (doc && (doc.access === 'public' || doc.OwnerId === userId)) {
+      if (doc && doc.OwnerId === userId) {
         next();
       } else {
         db.Role.findById(roleId).then((role) => {
@@ -64,7 +88,7 @@ const Authenticate = {
             next();
           } else {
             return res.status(403)
-              .send({ message: 'You are not allowed to view this document' });
+              .send({ message: 'You are not allowed to access this document' });
           }
         });
       }

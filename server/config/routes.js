@@ -1,4 +1,6 @@
+/* eslint import/no-unresolved: 0 */
 import users from '../controllers/api/users';
+import documents from '../controllers/api/documents';
 
 const routes = (router, authenticate) => {
   // Users routes
@@ -11,8 +13,24 @@ const routes = (router, authenticate) => {
   router
     .route('/users/:id')
       .get(authenticate.verifyToken, users.findOne)
-      .put(authenticate.verifyToken, authenticate.hasPermission, users.updateOne)
+      .put(authenticate.verifyToken, authenticate.userPermission, users.updateOne)
       .delete(authenticate.verifyToken, authenticate.isAdmin, users.remove);
+
+  // Document routes
+  router
+    .route('/documents')
+      .post(authenticate.verifyToken, documents.create)
+      .get(authenticate.verifyToken, authenticate.viewPermission, documents.getAll);
+
+  router
+    .route('/users/:id/documents')
+    .get(authenticate.verifyToken, documents.getDocsForUser);
+
+  router
+    .route('/documents/:id')
+      .get(authenticate.verifyToken, authenticate.viewPermission, documents.getOne)
+      .put(authenticate.verifyToken, authenticate.docPermission, documents.update)
+      .delete(authenticate.verifyToken, authenticate.docPermission, documents.remove);
 };
 
 

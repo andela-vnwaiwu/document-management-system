@@ -1,8 +1,8 @@
-/* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
+/* eslint import/no-extraneous-dependencies: 0 */
 /* eslint import/no-unresolved: 0 */
 /* eslint import/extensions: 0 */
 /* eslint no-unused-expressions: 0 */
-/* eslint no-unused-vars: ["error", { "args": "none" }] */
+/* eslint no-unused-vars: [2, { "args": "none" }] */
 import dotenv from 'dotenv';
 import 'babel-polyfill';
 import chai from 'chai';
@@ -22,15 +22,19 @@ const request = supertest(app);
 let user, token, secondUser, thirdUser, updateDetails;
 
 describe('User Suite', () => {
-  before(() => {
-    db.User.destroy({ where: {} });
+  before((done) => {
     user = factory.users;
     secondUser = factory.secondUser;
     thirdUser = factory.thirdUser;
     updateDetails = factory.updateDetails;
+    db.User.destroy({ where: {} });
+    done();
   });
 
-  after(() => db.User.destroy({ where: {} }));
+  after((done) => {
+    db.User.destroy({ where: {} });
+    done();
+  });
 
   describe('Get All Users GET: /api/users', () => {
     before((done) => {
@@ -82,7 +86,7 @@ describe('User Suite', () => {
   });
 
   describe('Get User GET: /api/users/:id', () => {
-    let thirdUserToken;
+    let thirdUserToken, thirdUserResult;
     before((done) => {
       request
         .post('/api/users/signup')
@@ -90,24 +94,24 @@ describe('User Suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           thirdUserToken = res.body.token;
+          thirdUserResult = res.body.user;
           done();
         });
     });
     it('returns the details of the particular user', (done) => {
       request
-        .get('/api/users/2')
+        .get(`/api/users/${thirdUserResult.id}`)
         .set('authorization', thirdUserToken)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
-          expect(res.body.user).to.be.an('object');
           done();
         });
     });
     it('should return not found if the user has not been saved', (done) => {
       request
-        .post('/api/users/5')
-        .send('authorization', thirdUserToken)
+        .get(`/api/users/${thirdUserResult.id * 5}`)
+        .set('authorization', thirdUserToken)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(404);
@@ -116,7 +120,7 @@ describe('User Suite', () => {
     });
     it('should return an error if the user is not logged in', (done) => {
       request
-        .get('/api/users/2')
+        .get(`/api/users/${thirdUserResult.id}`)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(401);
@@ -160,7 +164,6 @@ describe('User Suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(404);
-          expect(res.body.user).to.be.an('object');
           done();
         });
     });
@@ -172,27 +175,27 @@ describe('User Suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(403);
-          expect(res.body.user).to.be.an('object');
           done();
         });
     });
   });
 
   describe('Delete User DELETE: /api/users/:id', () => {
-    let deleteUser;
+    let deleteUser, deleteToken;
     before((done) => {
       request
         .post('/api/users/login')
         .send(secondUser)
         .end((err, res) => {
           deleteUser = res.body.user.id;
+          deleteToken = res.body.token;
           done();
         });
     });
     it('should return an error if the user does not have admin role', (done) => {
       request
         .delete(`/api/users/${deleteUser}`)
-        .set('Authorization', token)
+        .set('Authorization', deleteToken)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(403);

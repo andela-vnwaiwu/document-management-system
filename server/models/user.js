@@ -5,29 +5,59 @@ module.exports = function (sequelize, DataTypes) {
     username: {
       allowNull: false,
       type: DataTypes.STRING,
-      unique: true
+      unique: true,
+      validate: {
+        notEmpty: {
+          msg: 'LastName cannot be empty'
+        }
+      }
     },
     firstName: {
       allowNull: false,
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      validate: {
+        notEmpty: {
+          msg: 'LastName cannot be empty'
+        }
+      }
     },
     lastName: {
       allowNull: false,
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      validate: {
+        notEmpty: {
+          msg: 'LastName cannot be empty'
+        }
+      }
     },
     email: {
       allowNull: false,
       type: DataTypes.STRING,
       unique: true,
-      isEmail:true
+      validate: {
+        isEmail:{
+          msg: 'Invalid email address provided'
+        }
+      }
     },
     password: {
-      allowNull: false,
-      type: DataTypes.STRING
+      // allowNull: false,
+      type: DataTypes.STRING,
+      validate: {
+        len: {
+          args: [4, 100],
+          msg: 'Your password is too short'
+        }
+      }
     },
     RoleId: {
       allowNull: false,
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      validate: {
+        isInt: {
+          msg: 'RoleId must be an integer'
+        }
+      }
     }
   }, {
     classMethods: {
