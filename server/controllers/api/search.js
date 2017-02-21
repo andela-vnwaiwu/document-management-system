@@ -11,10 +11,10 @@ const search = {
         db.Document.findAll({
           where: {
             $or: [
-              { 
+              {
                 title: { $iLike: `%${query}%` }
               },
-              { 
+              {
                 content: { $iLike: `%${query}%` }
               }
             ]
@@ -37,7 +37,7 @@ const search = {
               $or: [
                 { isPublic: true },
                 { OwnerId: userId }
-              ]              
+              ]
             }
           },
           order: [['createdAt', 'DESC']]
