@@ -1,8 +1,12 @@
 /* eslint import/no-unresolved: 0 */
 import users from '../controllers/api/users';
 import documents from '../controllers/api/documents';
+import search from '../controllers/api/search';
 
 const routes = (router, authenticate) => {
+  // Search routes
+  router.get('/documents/search', authenticate.verifyToken, search.searchAll);
+  
   // Users routes
   router.post('/users/login', users.login);
   router.post('/users/signup', users.create);
