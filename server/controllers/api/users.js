@@ -45,9 +45,9 @@ const users = {
           RoleId: user.RoleId,
           userId: user.id
         };
-        const token = jwt.sign(jwtData, secretKey, { expiresIn: 3600 });
+        const token = jwt.sign(jwtData, secretKey, { expiresIn: 86400 });
         user = userAttributes(user);
-        return res.status(201).json({ token, expiresIn: 3600, user });
+        return res.status(201).json({ token, expiresIn: 86400, user });
       })
       .catch(error => res.status(400).json(error.errors));
     });
@@ -59,7 +59,7 @@ const users = {
         const token = jwt.sign({
           userId: user.id,
           RoleId: user.RoleId
-        }, secretKey, { expiresIn: 3600 });
+        }, secretKey, { expiresIn: 86400 });
         user = userAttributes(user);
         return res.status(302).json({ token, expiresIn: 86400, user });
       }
