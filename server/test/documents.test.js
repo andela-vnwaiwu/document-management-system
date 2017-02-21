@@ -21,8 +21,6 @@ describe('Document suite', () => {
   let user, secondUser, thirdUser, token, userToken, document1, document2, badDocument;
   let privateDoc, adminDoc, adminDocument, secondUserResult, userResult1;
   before((done) => {
-    db.User.destroy({ where: {} });
-    db.Document.destroy({ where: {} });
     user = factory.users;
     secondUser = factory.secondUser;
     thirdUser = factory.thirdUser;
@@ -30,27 +28,33 @@ describe('Document suite', () => {
     document2 = sampleDoc.second;
     badDocument = sampleDoc.badDoc;
     privateDoc = sampleDoc.third;
-    request
-      .post('/api/users/signup')
-      .send(user)
-      .end((err, res) => {
-        token = res.body.token;
-        userResult1 = res.body.user;
+    db.User.destroy({ where: {} }).then(() => {
+      db.Document.destroy({ where: {} }).then(() => {
         request
-          .post('/api/documents')
-          .send(document1)
-          .set('authorization', token)
-          .end((err, res) => {
-            adminDocument = res.body;
-            done();
-          });
+        .post('/api/users/signup')
+        .send(user)
+        .end((err, res) => {
+          token = res.body.token;
+          userResult1 = res.body.user;
+          request
+            .post('/api/documents')
+            .send(document1)
+            .set('authorization', token)
+            .end((err, res) => {
+              adminDocument = res.body;
+              done();
+            });
+        });
       });
+    });
   });
 
   after((done) => {
-    db.User.destroy({ where: {} });
-    db.Document.destroy({ where: {} });
-    done();
+    db.User.destroy({ where: {} }).then(() => {
+      db.Document.destroy({ where: {} }).then(() => {
+        done();
+      });
+    });
   });
   describe('Get non-existing documents GET: /api/documents/:id', () => {
     it('returns an error to the admin if no documents exists', (done) => {
@@ -77,7 +81,6 @@ describe('Document suite', () => {
           if (err) return done(err);
           userToken = res.body.token;
           secondUserResult = res.body.user;
-          console.log(secondUserResult)
           request
             .get('/api/documents')
             .set('authorization', userToken)
@@ -109,7 +112,7 @@ describe('Document suite', () => {
         });
     });
   });
-  
+
   describe('Create Document POST: /api/documents/', () => {
     it('should create a document successfully', (done) => {
       request
@@ -269,7 +272,7 @@ describe('Document suite', () => {
   });
 
   describe('Update Document PUT: /api/documents/:id', () => {
-    let result, userToken;
+    let result;
     before((done) => {
       request
         .post('/api/users/login')
@@ -399,7 +402,7 @@ describe('Document suite', () => {
   });
 
   describe('Delete Document DELETE: /api/documents/:id', () => {
-    let userResult, userToken;
+    let userResult;
     before((done) => {
       request
         .post('/api/users/login')

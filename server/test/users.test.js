@@ -26,13 +26,15 @@ describe('User Suite', () => {
     secondUser = factory.secondUser;
     thirdUser = factory.thirdUser;
     updateDetails = factory.updateDetails;
-    db.User.destroy({ where: {} });
-    done();
+    db.User.destroy({ where: {} }).then(() => {
+      done();
+    });
   });
 
   after((done) => {
-    db.User.destroy({ where: {} });
-    done();
+    db.User.destroy({ where: {} }).then(() => {
+      done();
+    });
   });
 
   describe('Get All Users GET: /api/users', () => {
@@ -43,7 +45,6 @@ describe('User Suite', () => {
         .end((err, res) => {
           token = res.body.token;
           userDetails = res.body.user;
-          console.log(userDetails)
           done();
         });
     });
@@ -146,7 +147,6 @@ describe('User Suite', () => {
     });
 
     it('should update the user\'s details for the admin or owner', (done) => {
-      console.log(userDetails.id, userId, 'lessons of life')
       request
         .put(`/api/users/${userDetails.id}`)
         .set('authorization', token)

@@ -18,31 +18,34 @@ const expect = chai.expect;
 const request = supertest(app);
 
 describe('Search Suite', () => {
-  let publicSearchDoc, userToken, token;
-  publicSearchDoc = sampleDoc.searchPublicDoc;
+  let userToken, token;
   before((done) => {
-    db.User.destroy({ where: {} });
-    db.Document.destroy({ where: {} });
-    request
-      .post('/api/users/signup')
-      .send(factory.secondUser)
-      .end((err, res) => {
-        if (err) return done(err);
-        userToken = res.body.token;
+    db.User.destroy({ where: {} }).then(() => {
+      db.Document.destroy({ where: {} }).then(() => {
         request
-          .post('/api/documents')
-          .send(publicSearchDoc)
-          .set('authorization', userToken)
+          .post('/api/users/signup')
+          .send(factory.secondUser)
           .end((err, res) => {
-            if (err) return done(err)
-            done();
+            if (err) return done(err);
+            userToken = res.body.token;
+            request
+              .post('/api/documents')
+              .send(sampleDoc.searchPublicDoc)
+              .set('authorization', userToken)
+              .end((err, res) => {
+                if (err) return done(err);
+                done();
+              });
           });
       });
+    });
   });
   after((done) => {
-    db.User.destroy({ where: {} });
-    db.Document.destroy({ where: {} });
-    done();
+    db.User.destroy({ where: {} }).then(() => {
+      db.Document.destroy({ where: {} }).then(() => {
+        done();
+      });
+    });
   });
 
   it('successfully returns the document with the search words to the admin', (done) => {
