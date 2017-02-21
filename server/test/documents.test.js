@@ -17,13 +17,10 @@ dotenv.config();
 const expect = chai.expect;
 const request = supertest(app);
 
-let user, secondUser, thirdUser, token, document1, document2, badDocument;
-let privateDoc, adminDoc;
-
 describe('Document suite', () => {
-  let userResult1;
+  let user, secondUser, thirdUser, token, userToken, document1, document2, badDocument;
+  let privateDoc, adminDoc, adminDocument, secondUserResult, userResult1;
   before((done) => {
-    db.User.destroy({ where: {} });
     user = factory.users;
     secondUser = factory.secondUser;
     thirdUser = factory.thirdUser;
@@ -31,26 +28,89 @@ describe('Document suite', () => {
     document2 = sampleDoc.second;
     badDocument = sampleDoc.badDoc;
     privateDoc = sampleDoc.third;
-    request
-      .post('/api/users/signup')
-      .send(user)
-      .end((err, res) => {
-        token = res.body.token;
-        userResult1 = res.body.user;
+    db.User.destroy({ where: {} }).then(() => {
+      db.Document.destroy({ where: {} }).then(() => {
         request
-          .post('/api/documents')
-          .send(document1)
-          .set('authorization', token)
-          .end((err, res) => {
-            adminDoc = res.body;
-            done();
-          });
+        .post('/api/users/signup')
+        .send(user)
+        .end((err, res) => {
+          token = res.body.token;
+          userResult1 = res.body.user;
+          request
+            .post('/api/documents')
+            .send(document1)
+            .set('authorization', token)
+            .end((err, res) => {
+              adminDocument = res.body;
+              done();
+            });
+        });
       });
+    });
   });
 
-  after(() => {
-    db.User.destroy({ where: {} });
-    db.Document.destroy({ where: {} });
+  after((done) => {
+    db.User.destroy({ where: {} }).then(() => {
+      db.Document.destroy({ where: {} }).then(() => {
+        done();
+      });
+    });
+  });
+  describe('Get non-existing documents GET: /api/documents/:id', () => {
+    it('returns an error to the admin if no documents exists', (done) => {
+      request
+        .delete(`/api/documents/${adminDocument.id}`)
+        .set('authorization', token)
+        .end((err, res) => {
+          if (err) return done(err);
+          request
+            .get('/api/documents')
+            .set('authorization', token)
+            .end((err, res) => {
+              if (err) return done(err);
+              expect(res.status).to.equal(404);
+              done();
+            });
+        });
+    });
+    it('returns an error to a user if no documents exists', (done) => {
+      request
+        .post('/api/users/signup')
+        .send(secondUser)
+        .end((err, res) => {
+          if (err) return done(err);
+          userToken = res.body.token;
+          secondUserResult = res.body.user;
+          request
+            .get('/api/documents')
+            .set('authorization', userToken)
+            .end((err, res) => {
+              if (err) return done(err);
+              expect(res.status).to.equal(404);
+              done();
+            });
+        });
+    });
+    it('returns an error if a user has no document', (done) => {
+      request
+        .get(`/api/users/${secondUserResult.id}/documents`)
+        .set('authorization', userToken)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(404);
+          done();
+        });
+    });
+    it('returns an error to the admin if a user has no document', (done) => {
+      request
+        .get(`/api/users/${secondUserResult.id}/documents`)
+        .set('authorization', token)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(404);
+          done();
+        });
+    });
   });
 
   describe('Create Document POST: /api/documents/', () => {
@@ -60,6 +120,7 @@ describe('Document suite', () => {
         .send(document1)
         .set('authorization', token)
         .end((err, res) => {
+          adminDoc = res.body;
           expect(res.status).to.equal(200);
           expect(res.body).to.be.defined;
           expect(res.body.title).to.be.defined;
@@ -93,7 +154,7 @@ describe('Document suite', () => {
     let secondToken;
     before((done) => {
       request
-      .post('/api/users/signup')
+      .post('/api/users/login')
       .send(secondUser)
       .end((err, res) => {
         secondToken = res.body.token;
@@ -157,6 +218,16 @@ describe('Document suite', () => {
           done();
         });
     });
+    it('returns an error if the document does not exist', (done) => {
+      request
+        .get(`/api/documents/${adminDoc.id * 8}`)
+        .set('authorization', token)
+        .end((err, res) => {
+          if (err) done(err);
+          expect(res.status).to.equal(404);
+          done();
+        });
+    });
     it('returns an error if the document has private access', (done) => {
       privateDoc.OwnerId = userResult1.id;
       request
@@ -201,7 +272,7 @@ describe('Document suite', () => {
   });
 
   describe('Update Document PUT: /api/documents/:id', () => {
-    let result, userToken;
+    let result;
     before((done) => {
       request
         .post('/api/users/login')
@@ -265,19 +336,19 @@ describe('Document suite', () => {
   });
 
   describe('Get A User\'s Documents GET: /api/users/:id/documents', () => {
-    let userResult, userToken;
+    let userResult;
     before((done) => {
       request
         .post('/api/users/login')
         .send(secondUser)
         .end((err, res) => {
           userToken = res.body.token;
+          userResult = res.body.user;
           request
             .post('/api/documents')
             .send(document1)
             .set('authorization', userToken)
             .end((err, res) => {
-              userResult = res.body;
               done();
             });
         });
@@ -331,7 +402,7 @@ describe('Document suite', () => {
   });
 
   describe('Delete Document DELETE: /api/documents/:id', () => {
-    let userResult, userToken;
+    let userResult;
     before((done) => {
       request
         .post('/api/users/login')
@@ -384,6 +455,16 @@ describe('Document suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
+          done();
+        });
+    });
+    it('returns an error if document could not be found', (done) => {
+      request
+        .delete(`/api/documents/${userResult.id * 8}`)
+        .set('authorization', token)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(404);
           done();
         });
     });

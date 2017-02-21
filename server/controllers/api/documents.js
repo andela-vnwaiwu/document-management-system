@@ -36,10 +36,10 @@ const documents = {
         db.Document.findAll({
           attributes: ['id', 'title', 'content', 'isPublic', 'tags', 'createdAt', 'updatedAt']
         }).then((result) => {
-          if (!result) {
+          if (result < 1) {
             return res.status(404).json({ message: 'No Document found' });
           }
-          return res.status(200).json(result);
+          return res.status(200).json({ result, message: userId });
         });
       } else {
         db.Document.findAll({
@@ -51,7 +51,7 @@ const documents = {
             }]
           }
         }).then((results) => {
-          if (!results) {
+          if (results < 1) {
             return res.status(404).json({ message: 'No document found' });
           }
           return res.status(200).json(results);
@@ -63,7 +63,7 @@ const documents = {
   getOne: (req, res) => {
     const docId = req.params.id;
     db.Document.findById(docId).then((result) => {
-      if (!result) {
+      if (result < 1) {
         return res.status(404).json({ message: 'Document not found' });
       }
       const document = docAttributes(result);
@@ -74,7 +74,7 @@ const documents = {
   update: (req, res) => {
     const docId = req.params.id;
     db.Document.findById(docId).then((result) => {
-      if (!result) {
+      if (result < 1) {
         return res.status(404).json({ message: 'Document not found' });
       }
       result.update(req.body).then((updatedResult) => {
@@ -91,7 +91,7 @@ const documents = {
         id: docId
       }
     }).then((doc) => {
-      if (!doc) {
+      if (doc < 1) {
         return res.status(404)
           .json({ message: `Could not find document ${docId} to delete` });
       }
@@ -106,27 +106,27 @@ const documents = {
     db.Role.findById(roleId).then((role) => {
       if (role) {
         if (ownerId === queryId || role.title === 'admin') {
-          db.Document.find({
+          db.Document.findAll({
             where: {
-              id: queryId
+              OwnerId: queryId
             }
           }).then((docs) => {
-            if (!docs) {
+            if (docs < 1) {
               return res.status(404).json({ message: 'No documents found' });
             }
             const results = docs;
             return res.status(200).json(results);
           });
         } else {
-          db.Document.find({
+          db.Document.findAll({
             where: {
-              id: queryId,
+              OwnerId: queryId,
               $and: {
                 isPublic: true
               }
             }
           }).then((docs) => {
-            if (!docs) {
+            if (docs < 1) {
               return res.status(404).json({ message: 'No documents found' });
             }
             const results = docs;

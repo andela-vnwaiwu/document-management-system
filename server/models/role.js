@@ -2,8 +2,14 @@
 module.exports = function (sequelize, DataTypes) {
   var Role = sequelize.define('Role', {
     title: {
+      allowNull: false,
       type: DataTypes.STRING,
-      unique: true
+      unique: true,
+      validate: {
+        notEmpty: {
+          msg: 'Title cannot be empty'
+        }
+      }
     }
   }, {
     classMethods: {

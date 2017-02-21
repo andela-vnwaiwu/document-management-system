@@ -19,21 +19,22 @@ const secretKey = process.env.JWT_SECRET_KEY || 'jhebefuehf7yu3832978ry09iofe';
 const expect = chai.expect;
 const request = supertest(app);
 
-let user, token, secondUser, thirdUser, updateDetails;
-
 describe('User Suite', () => {
+  let user, token, secondUser, thirdUser, updateDetails, userDetails;
   before((done) => {
     user = factory.users;
     secondUser = factory.secondUser;
     thirdUser = factory.thirdUser;
     updateDetails = factory.updateDetails;
-    db.User.destroy({ where: {} });
-    done();
+    db.User.destroy({ where: {} }).then(() => {
+      done();
+    });
   });
 
   after((done) => {
-    db.User.destroy({ where: {} });
-    done();
+    db.User.destroy({ where: {} }).then(() => {
+      done();
+    });
   });
 
   describe('Get All Users GET: /api/users', () => {
@@ -43,6 +44,7 @@ describe('User Suite', () => {
         .send(user)
         .end((err, res) => {
           token = res.body.token;
+          userDetails = res.body.user;
           done();
         });
     });
@@ -146,7 +148,7 @@ describe('User Suite', () => {
 
     it('should update the user\'s details for the admin or owner', (done) => {
       request
-        .put(`/api/users/${userId}`)
+        .put(`/api/users/${userDetails.id}`)
         .set('authorization', token)
         .send(updateDetails)
         .end((err, res) => {
