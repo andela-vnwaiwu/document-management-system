@@ -17,7 +17,13 @@ const docAttributes = (doc) => {
 };
 
 const documents = {
-  create: (req, res) => {
+ /**
+  * Create a new document
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  create(req, res) {
     req.body.OwnerId = req.decoded.userId;
     db.Document.create(req.body).then((doc) => {
       const document = docAttributes(doc);
@@ -28,7 +34,13 @@ const documents = {
     });
   },
 
-  getAll: (req, res) => {
+  /**
+  * Gets all Documents
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  getAll(req, res) {
     const userId = req.decoded.userId;
     const roleId = req.decoded.RoleId;
     db.Role.findById(roleId).then((role) => {
@@ -60,7 +72,13 @@ const documents = {
     });
   },
 
-  getOne: (req, res) => {
+  /**
+  * Gets a Document
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  getOne(req, res) {
     const docId = req.params.id;
     db.Document.findById(docId).then((result) => {
       if (result < 1) {
@@ -71,7 +89,13 @@ const documents = {
     });
   },
 
-  update: (req, res) => {
+  /**
+  * Updates a document
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  update(req, res) {
     const docId = req.params.id;
     db.Document.findById(docId).then((result) => {
       if (result < 1) {
@@ -84,7 +108,13 @@ const documents = {
     });
   },
 
-  remove: (req, res) => {
+  /**
+  * Deletes a document
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  remove(req, res) {
     const docId = req.params.id;
     db.Document.destroy({
       where: {
@@ -99,7 +129,13 @@ const documents = {
     });
   },
 
-  getDocsForUser: (req, res) => {
+  /**
+  * Gets all Documents for a user
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  getDocsForUser(req, res) {
     const queryId = req.params.id;
     const ownerId = req.decoded.userId;
     const roleId = req.decoded.RoleId;

@@ -2,7 +2,13 @@
 import db from '../../models/';
 
 const search = {
-  searchAll: (req, res) => {
+  /**
+  * Search all Documents
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  searchAll(req, res) {
     const userId = req.decoded.userId;
     const roleId = req.decoded.RoleId;
     const query = req.query.text;

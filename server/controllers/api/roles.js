@@ -2,7 +2,13 @@
 import db from '../../models/';
 
 const roles = {
-  create: (req, res) => {
+  /**
+  * Create Role
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  create(req, res) {
     db.Role.find({
       where: {
         title: req.body.title
@@ -20,7 +26,13 @@ const roles = {
     });
   },
 
-  getOne: (req, res) => {
+  /**
+  * Get a Role
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  getOne(req, res) {
     const roleId = req.params.id;
     db.Role.findById(roleId).then((result) => {
       if (result < 1) {
@@ -30,7 +42,13 @@ const roles = {
     });
   },
 
-  getAll: (req, res) => {
+  /**
+  * Get all Roles
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  getAll(req, res) {
     db.Role.findAll().then((result) => {
       if (result < 1) {
         return res.status(404).json({ message: 'Role not found' });
@@ -39,7 +57,13 @@ const roles = {
     });
   },
 
-  update: (req, res) => {
+  /**
+  * Update a Role
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  update(req, res) {
     const roleId = req.params.id;
     db.Role.findById(roleId).then((result) => {
       if (result && result.title === 'admin') {
@@ -56,7 +80,13 @@ const roles = {
     });
   },
 
-  delete: (req, res) => {
+  /**
+  * Delete a Role
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  delete(req, res) {
     const roleId = req.params.id;
     db.Role.findById(roleId).then((result) => {
       if (result && result.title === 'admin') {
