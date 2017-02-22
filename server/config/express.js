@@ -42,6 +42,10 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/', (req, res) => {
+  return res.status(200)
+    .json({ message: 'Welcome to Vonvick\'s Document Management System' });
+});
 app.use('/api', router);
 
 export default app;

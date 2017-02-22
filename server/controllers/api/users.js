@@ -21,7 +21,13 @@ const userAttributes = (user) => {
 
 
 const users = {
-  create: (req, res) => {
+  /**
+  * Creates a new user
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  create(req, res) {
     db.User.findOne({
       where: {
         email: req.body.email
@@ -54,7 +60,13 @@ const users = {
     });
   },
 
-  login: (req, res) => {
+  /**
+  * Logs a user into the api
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  login(req, res) {
     db.User.findOne({ where: { email: req.body.email } }).then((user) => {
       if (user && user.matchPassword(req.body.password)) {
         const token = jwt.sign({
@@ -68,7 +80,13 @@ const users = {
     });
   },
 
-  logout: (req, res) => {
+  /**
+  * Logs a user out of the api
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  logout(req, res) {
     const token = req.headers.authorization || req.headers['x-access-token'];
     if (!token) {
       return res.status(400).json({ message: 'User not logged in before' });
@@ -76,7 +94,13 @@ const users = {
     return res.status(302).json({ message: 'User successfully logged out' });
   },
 
-  findAll: (req, res) => {
+  /**
+  * Get all users
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  findAll(req, res) {
     db.User.findAll({
       attributes: [
         'id',
@@ -93,7 +117,13 @@ const users = {
     });
   },
 
-  findOne: (req, res) => {
+  /**
+  * Get a user
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  findOne(req, res) {
     const userId = req.params.id;
     db.User.findById(userId).then((user) => {
       if (!user) {
@@ -104,7 +134,13 @@ const users = {
     });
   },
 
-  updateOne: (req, res) => {
+  /**
+  * Update a user
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  updateOne(req, res) {
     const userId = req.params.id;
     db.User.findById(userId).then((user) => {
       if (!user) {
@@ -117,7 +153,13 @@ const users = {
     });
   },
 
-  remove: (req, res) => {
+  /**
+  * Delete a user
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  remove(req, res) {
     const userId = req.params.id;
     db.User.destroy({
       where: {

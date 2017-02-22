@@ -49,5 +49,4 @@ const routes = (router, authenticate) => {
       .delete(authenticate.verifyToken, authenticate.isAdmin, roles.delete);
 };
 
-
 export default routes;
