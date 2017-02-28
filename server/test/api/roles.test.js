@@ -7,10 +7,9 @@ import dotenv from 'dotenv';
 import 'babel-polyfill';
 import chai from 'chai';
 import supertest from 'supertest';
-import app from '../app';
-import factory from './helpers/factory.helpers';
-// import sampleDoc from './helpers/documents.helper';
-import db from '../models/';
+import app from '../../app';
+import factory from '../helpers/factory.helpers';
+import db from '../../models/';
 
 dotenv.config();
 
@@ -18,15 +17,19 @@ const expect = chai.expect;
 const request = supertest(app);
 
 describe('Roles Suite', () => {
-  let adminToken, newRole;
+  let user, adminToken, newRole, adminRole;
   before((done) => {
-    db.User.destroy({ where: {} }).then(() => {
-      db.Role.destroy({ where: { title: 'newRole' } }).then(() => {
-        request
-          .post('/api/users/signup')
-          .send(factory.users)
+    user = factory.users;
+    db.Role.sequelize.sync({ force: true }).then(() => {
+      db.Role.bulkCreate([factory.adminRole, factory.regularRole], {
+        returning: true
+      }).then((newRoles) => {
+        adminRole = newRoles[0];
+        user.RoleId = adminRole.id;
+
+        request.post('/api/users/signup')
+          .send(user)
           .end((err, res) => {
-            if (err) return done(err);
             adminToken = res.body.token;
             done();
           });
@@ -35,8 +38,8 @@ describe('Roles Suite', () => {
   });
 
   after((done) => {
-    db.Role.destroy({ where: { title: 'newRole' } }).then(() => {
-      db.User.destroy({ where: {} }).then(() => {
+    db.User.sequelize.sync({ force: true }).then(() => {
+      db.Role.sequelize.sync({ force: true }).then(() => {
         done();
       });
     });
@@ -63,6 +66,17 @@ describe('Roles Suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(409);
+          done();
+        });
+    });
+    it('returns an error if no title is passed', (done) => {
+      request
+        .post('/api/roles')
+        .send({})
+        .set('authorization', adminToken)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(400);
           done();
         });
     });

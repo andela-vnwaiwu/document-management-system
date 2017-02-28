@@ -2,18 +2,25 @@
 /* eslint import/no-unresolved: 0 */
 import faker from 'faker';
 
-const factory = {
+module.exports = {
   users: {
     username: faker.internet.userName(),
     firstName: faker.name.firstName(),
     lastName: faker.name.lastName(),
     email: faker.internet.email(),
-    password: faker.internet.password(),
-    RoleId: 1
+    password: faker.internet.password()
   },
 
-  roles: {
-    title: ['admin', 'owner', 'regular', 'guest']
+  adminRole: {
+    title: 'admin'
+  },
+
+  regularRole: {
+    title: 'regular'
+  },
+
+  role: {
+    title: 'role'
   },
 
   secondUser: {
@@ -21,8 +28,7 @@ const factory = {
     lastName: 'factory',
     firstName: 'factories',
     email: 'factory@email.com',
-    password: 'password',
-    RoleId: 2
+    password: 'password'
   },
 
   thirdUser: {
@@ -30,8 +36,7 @@ const factory = {
     firstName: faker.name.firstName(),
     lastName: faker.name.lastName(),
     email: faker.internet.email(),
-    password: faker.internet.password(),
-    RoleId: 2
+    password: faker.internet.password()
   },
 
   wrongUser: {
@@ -52,4 +57,3 @@ const factory = {
     RoleId: 2
   }
 };
-export default factory;

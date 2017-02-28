@@ -7,10 +7,10 @@ import dotenv from 'dotenv';
 import 'babel-polyfill';
 import chai from 'chai';
 import supertest from 'supertest';
-import app from '../app';
-import factory from './helpers/factory.helpers';
-import sampleDoc from './helpers/documents.helper';
-import db from '../models/';
+import app from '../../app';
+import factory from '../helpers/factory.helpers';
+import sampleDoc from '../helpers/documents.helper';
+import db from '../../models/';
 
 dotenv.config();
 
@@ -18,44 +18,54 @@ const expect = chai.expect;
 const request = supertest(app);
 
 describe('Document suite', () => {
-  let user, secondUser, thirdUser, token, userToken, document1, document2, badDocument;
-  let privateDoc, adminDoc, adminDocument, secondUserResult, userResult1;
+  let user, secondUser, thirdUser, token, userToken, firstDocument, secondDocument, badDocument;
+  let privateDoc, adminDoc, adminDocument, secondUserResult, adminUserResult;
+  let adminRole, regularRole;
   before((done) => {
     user = factory.users;
     secondUser = factory.secondUser;
     thirdUser = factory.thirdUser;
-    document1 = sampleDoc.first;
-    document2 = sampleDoc.second;
+    firstDocument = sampleDoc.first;
+    secondDocument = sampleDoc.second;
     badDocument = sampleDoc.badDoc;
     privateDoc = sampleDoc.third;
-    db.User.destroy({ where: {} }).then(() => {
-      db.Document.destroy({ where: {} }).then(() => {
-        request
-        .post('/api/users/signup')
+    db.Role.bulkCreate([factory.adminRole, factory.regularRole], {
+      returning: true
+    }).then((newRoles) => {
+      adminRole = newRoles[0];
+      regularRole = newRoles[1];
+      secondUser.RoleId = regularRole.id;
+      thirdUser.RoleId = regularRole.id;
+      user.RoleId = adminRole.id;
+
+      request.post('/api/users/signup')
         .send(user)
         .end((err, res) => {
+          adminUserResult = res.body.user;
           token = res.body.token;
-          userResult1 = res.body.user;
+          firstDocument.OwnerId = adminUserResult.id;
           request
             .post('/api/documents')
-            .send(document1)
+            .send(firstDocument)
             .set('authorization', token)
             .end((err, res) => {
               adminDocument = res.body;
               done();
             });
         });
-      });
     });
   });
 
   after((done) => {
-    db.User.destroy({ where: {} }).then(() => {
-      db.Document.destroy({ where: {} }).then(() => {
-        done();
+    db.Document.sequelize.sync({ force: true }).then(() => {
+      db.User.sequelize.sync({ force: true }).then(() => {
+        db.Role.sequelize.sync({ force: true }).then(() => {
+          done();
+        });
       });
     });
   });
+
   describe('Get non-existing documents GET: /api/documents/:id', () => {
     it('returns an error to the admin if no documents exists', (done) => {
       request
@@ -117,7 +127,7 @@ describe('Document suite', () => {
     it('should create a document successfully', (done) => {
       request
         .post('/api/documents')
-        .send(document1)
+        .send(firstDocument)
         .set('authorization', token)
         .end((err, res) => {
           adminDoc = res.body;
@@ -130,7 +140,7 @@ describe('Document suite', () => {
     it('should not create a document if the user is not logged in', (done) => {
       request
         .post('/api/documents')
-        .send(document1)
+        .send(firstDocument)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(401);
@@ -160,7 +170,7 @@ describe('Document suite', () => {
         secondToken = res.body.token;
         request
           .post('/api/documents')
-          .send(document2)
+          .send(secondDocument)
           .set('authorization', secondToken)
           .end((err, res) => {
             if (err) done(err);
@@ -229,7 +239,7 @@ describe('Document suite', () => {
         });
     });
     it('returns an error if the document has private access', (done) => {
-      privateDoc.OwnerId = userResult1.id;
+      privateDoc.OwnerId = adminUserResult.id;
       request
         .post('/api/documents')
         .send(privateDoc)
@@ -281,7 +291,7 @@ describe('Document suite', () => {
           userToken = res.body.token;
           request
             .post('/api/documents')
-            .send(document1)
+            .send(firstDocument)
             .set('authorization', userToken)
             .end((err, res) => {
               result = res.body;
@@ -292,7 +302,7 @@ describe('Document suite', () => {
     it('successfully updates a document', (done) => {
       request
         .put(`/api/documents/${result.id}`)
-        .send(document2)
+        .send(secondDocument)
         .set('authorization', userToken)
         .end((err, res) => {
           if (err) done(err);
@@ -303,7 +313,7 @@ describe('Document suite', () => {
     it('returns an error if it does not belong to the user', (done) => {
       request
         .put(`/api/documents/${adminDoc.id}`)
-        .send(document2)
+        .send(secondDocument)
         .set('authorization', userToken)
         .end((err, res) => {
           if (err) return done(err);
@@ -315,7 +325,7 @@ describe('Document suite', () => {
       (done) => {
         request
         .put(`/api/documents/${result.id * 4}`)
-        .send(document2)
+        .send(secondDocument)
         .set('authorization', token)
         .end((err, res) => {
           if (err) done(err);
@@ -326,7 +336,7 @@ describe('Document suite', () => {
     it('returns an error if the user is not logged in', (done) => {
       request
         .put(`/api/documents/${result.id}`)
-        .send(document2)
+        .send(secondDocument)
         .end((err, res) => {
           if (err) done(err);
           expect(res.status).to.equal(401);
@@ -346,7 +356,7 @@ describe('Document suite', () => {
           userResult = res.body.user;
           request
             .post('/api/documents')
-            .send(document1)
+            .send(firstDocument)
             .set('authorization', userToken)
             .end((err, res) => {
               done();
@@ -411,7 +421,7 @@ describe('Document suite', () => {
           userToken = res.body.token;
           request
             .post('/api/documents')
-            .send(document1)
+            .send(firstDocument)
             .set('authorization', userToken)
             .end((err, res) => {
               userResult = res.body;

@@ -2,7 +2,7 @@
 /* eslint import/no-unresolved: 0 */
 import faker from 'faker';
 
-const documents = {
+module.exports = {
   first: {
     title: faker.lorem.words(),
     content: faker.lorem.paragraph(),
@@ -47,5 +47,3 @@ const documents = {
     tags: ['programming', 'code', 'software', 'andela']
   }
 };
-
-export default documents;

@@ -8,9 +8,9 @@ import 'babel-polyfill';
 import chai from 'chai';
 import jwt from 'jsonwebtoken';
 import supertest from 'supertest';
-import app from '../app';
-import factory from '././helpers/factory.helpers';
-import db from '../models/';
+import app from '../../app';
+import factory from '../helpers/factory.helpers';
+import db from '../../models/';
 
 dotenv.config();
 
@@ -20,20 +20,36 @@ const expect = chai.expect;
 const request = supertest(app);
 
 describe('User Suite', () => {
-  let user, token, secondUser, thirdUser, updateDetails, userDetails;
+  let user, token, secondUser, thirdUser, updateDetails, userDetails, adminUser;
+  let adminRole, regularRole, userToken;
   before((done) => {
     user = factory.users;
     secondUser = factory.secondUser;
     thirdUser = factory.thirdUser;
-    updateDetails = factory.updateDetails;
-    db.User.destroy({ where: {} }).then(() => {
-      done();
+    db.Role.bulkCreate([factory.adminRole, factory.regularRole], {
+      returning: true
+    }).then((newRoles) => {
+      adminRole = newRoles[0];
+      regularRole = newRoles[1];
+      secondUser.RoleId = regularRole.id;
+      thirdUser.RoleId = regularRole.id;
+      user.RoleId = adminRole.id;
+
+      request.post('/api/users/signup')
+        .send(user)
+        .end((err, res) => {
+          token = res.body.token;
+          adminUser = res.body.user;
+          done();
+        });
     });
   });
 
   after((done) => {
-    db.User.destroy({ where: {} }).then(() => {
-      done();
+    db.User.sequelize.sync({ force: true }).then(() => {
+      db.Role.sequelize.sync({ force: true }).then(() => {
+        done();
+      });
     });
   });
 
@@ -41,9 +57,9 @@ describe('User Suite', () => {
     before((done) => {
       request
         .post('/api/users/signup')
-        .send(user)
+        .send(secondUser)
         .end((err, res) => {
-          token = res.body.token;
+          userToken = res.body.token;
           userDetails = res.body.user;
           done();
         });
@@ -71,18 +87,12 @@ describe('User Suite', () => {
     });
     it('should return an error if the user is not an admin', (done) => {
       request
-        .post('/api/users/signup')
-        .send(secondUser)
+        .get('/api/users')
+        .set('authorization', userToken)
         .end((err, res) => {
           if (err) return done(err);
-          request
-            .get('/api/users')
-            .set('authorization', res.body.token)
-            .end((err, res) => {
-              if (err) return done(err);
-              expect(res.status).to.equal(403);
-              done();
-            });
+          expect(res.status).to.equal(403);
+          done();
         });
     });
   });
@@ -160,7 +170,7 @@ describe('User Suite', () => {
     });
     it('should return an error when trying to update a non-existing user', (done) => {
       request
-        .put(`/api/users/${userId * 2}`)
+        .put(`/api/users/${userId * 8}`)
         .set('authorization', token)
         .send(updateDetails)
         .end((err, res) => {
@@ -198,6 +208,16 @@ describe('User Suite', () => {
       request
         .delete(`/api/users/${deleteUser}`)
         .set('Authorization', deleteToken)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(403);
+          done();
+        });
+    });
+    it('should return an error when trying to delete the admin', (done) => {
+      request
+        .delete(`/api/users/${adminUser.id}`)
+        .set('Authorization', token)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(403);

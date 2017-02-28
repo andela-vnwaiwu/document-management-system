@@ -3,31 +3,42 @@
 import 'babel-polyfill';
 import chai from 'chai';
 import supertest from 'supertest';
-import app from '../app';
-import factory from './helpers/factory.helpers';
-import db from '../models/';
+import app from '../../app';
+import factory from '../helpers/factory.helpers';
+import db from '../../models/';
 
 const expect = chai.expect;
 const request = supertest(app);
 const agent = supertest.agent(app);
 
-let user, token, wrongUser;
+let token, wrongUser, roleParams, userParams;
 
 describe('Auth Suite', () => {
-  before(() => {
-    db.User.destroy({ where: {} });
-    user = factory.users;
+  before((done) => {
+    userParams = factory.users;
+    roleParams = factory.adminRole;
+    db.Role.create(roleParams).then((role) => {
+      userParams.RoleId = role.id;
+      done();
+    });
     wrongUser = factory.wrongUser;
   });
 
-  after(() => db.User.destroy({ where: {} }));
+  after((done) => {
+    db.User.sequelize.sync({ force: true }).then(() => {
+      db.Role.sequelize.sync({ force: true }).then(() => {
+        done();
+      });
+    });
+  });
 
   describe('Create User POST: /api/users/signup', () => {
     it('should successfully create a new user on succesful registration',
       (done) => {
+        userParams;
         request
           .post('/api/users/signup')
-          .send(user)
+          .send(userParams)
           .end((err, res) => {
             if (err) return done(err);
             expect(res.status).to.equal(201);
@@ -50,7 +61,7 @@ describe('Auth Suite', () => {
       (done) => {
         request
           .post('/api/users/signup')
-          .send(user)
+          .send(userParams)
           .end((err, res) => {
             if (err) return done(err);
             expect(res.status).to.equal(409);
@@ -63,7 +74,7 @@ describe('Auth Suite', () => {
     it('should successfully log in a registered user', (done) => {
       request
         .post('/api/users/login')
-        .send({ email: user.email, password: user.password })
+        .send({ email: userParams.email, password: userParams.password })
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(302);
@@ -74,7 +85,7 @@ describe('Auth Suite', () => {
     it('should return an error if the password field is empty', (done) => {
       request
         .post('/api/users/login')
-        .send({ email: user.email, password: '' })
+        .send({ email: userParams.email, password: '' })
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(401);
@@ -84,7 +95,7 @@ describe('Auth Suite', () => {
     it('should return an error if the email field is empty', (done) => {
       request
         .post('/api/users/login')
-        .send({ email: '', password: user.password })
+        .send({ email: '', password: userParams.password })
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(401);
@@ -97,7 +108,7 @@ describe('Auth Suite', () => {
     before((done) => {
       request
         .post('/api/users/login')
-        .send({ email: user.email, password: user.password })
+        .send({ email: userParams.email, password: userParams.password })
         .end((err, res) => {
           if (err) return done(err);
           token = res.body.token;
