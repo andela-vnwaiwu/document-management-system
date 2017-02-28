@@ -29,7 +29,10 @@ module.exports = function (sequelize, DataTypes) {
     },
     isPublic: {
       defaultValue: true,
-      type: DataTypes.BOOLEAN
+      type: DataTypes.BOOLEAN,
+      validate: {
+        isIn: [[ true, false]]
+      }
     },
     tags: {
       type: DataTypes.ARRAY(DataTypes.TEXT)
