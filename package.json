@@ -4,11 +4,9 @@
   "description": "A document management system created using reactjs, node and express",
   "main": "app.js",
   "scripts": {
-    "build": "webpack -w",
-    "test": "npm run migration && NODE_ENV=test babel-node ./node_modules/babel-istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec server/test",
+    "test": "npm run migration && NODE_ENV=test babel-node ./node_modules/babel-istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec server/test/*/**",
     "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
-    "start": "npm run migration && npm-run-all --parallel serve",
-    "serve": "babel-watch ./server/app.js",
+    "start": "npm run migration && gulp",
     "migration": "sequelize db:migrate"
   },
   "repository": {
