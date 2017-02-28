@@ -16,7 +16,7 @@ const docAttributes = (doc) => {
   return attributes;
 };
 
-const documents = {
+const Documents = {
  /**
   * Create a new document
   * @param {Object} req Request object
@@ -46,7 +46,8 @@ const documents = {
     db.Role.findById(roleId).then((role) => {
       if (role && role.title === 'admin') {
         db.Document.findAll({
-          attributes: ['id', 'title', 'content', 'isPublic', 'tags', 'createdAt', 'updatedAt']
+          attributes: ['id', 'title', 'content', 'isPublic', 'tags', 'createdAt', 'updatedAt'],
+          order: [['createdAt', 'DESC']]
         }).then((result) => {
           if (result < 1) {
             return res.status(404).json({ message: 'No Document found' });
@@ -61,7 +62,8 @@ const documents = {
             }, {
               OwnerId: userId
             }]
-          }
+          },
+          order: [['createdAt', 'DESC']]
         }).then((results) => {
           if (results < 1) {
             return res.status(404).json({ message: 'No document found' });
@@ -135,7 +137,7 @@ const documents = {
   * @param {Object} res Response object
   * @returns {Object} - Returns response object
   */
-  getDocsForUser(req, res) {
+  getDocumentsForUser(req, res) {
     const queryId = req.params.id;
     const ownerId = req.decoded.userId;
     const roleId = req.decoded.RoleId;
@@ -145,7 +147,8 @@ const documents = {
           db.Document.findAll({
             where: {
               OwnerId: queryId
-            }
+            },
+            order: [['createdAt', 'DESC']]
           }).then((docs) => {
             if (docs < 1) {
               return res.status(404).json({ message: 'No documents found' });
@@ -160,7 +163,8 @@ const documents = {
               $and: {
                 isPublic: true
               }
-            }
+            },
+            order: [['createdAt', 'DESC']]
           }).then((docs) => {
             if (docs < 1) {
               return res.status(404).json({ message: 'No documents found' });
@@ -174,4 +178,4 @@ const documents = {
   }
 };
 
-export default documents;
+export default Documents;

@@ -20,7 +20,7 @@ const userAttributes = (user) => {
 };
 
 
-const users = {
+const Users = {
   /**
   * Creates a new user
   * @param {Object} req Request object
@@ -56,7 +56,9 @@ const users = {
         user = userAttributes(user);
         return res.status(201).json({ token, expiresIn: 86400, user });
       })
-      .catch(error => res.status(400).json(error.errors));
+      .catch((error) => {
+        return res.status(400).json(error.errors);
+      });
     });
   },
 
@@ -111,7 +113,8 @@ const users = {
         'RoleId',
         'createdAt',
         'updatedAt'
-      ]
+      ],
+      order: [['createdAt', 'DESC']]
     }).then((result) => {
       return res.status(200).json({ users: result });
     });
@@ -161,17 +164,29 @@ const users = {
   */
   remove(req, res) {
     const userId = req.params.id;
-    db.User.destroy({
+    db.Role.findOne({
       where: {
-        id: userId
+        title: 'admin'
       }
-    }).then((user) => {
-      if (!user) {
-        return res.status(404).json({ message: 'No user found to delete' });
-      }
-      return res.status(200).json({ message: 'User successfully deleted' });
+    }).then((role) => {
+      db.User.findById(userId).then((user) => {
+        if (user && user.RoleId === role.id) {
+          return res.status(403)
+            .json({ message: 'You cannot delete the admin' });
+        }
+        db.User.destroy({
+          where: {
+            id: userId
+          }
+        }).then((result) => {
+          if (!result) {
+            return res.status(404).json({ message: 'No user found to delete' });
+          }
+          return res.status(200).json({ message: 'User successfully deleted' });
+        });
+      });
     });
   }
 };
 
-export default users;
+export default Users;

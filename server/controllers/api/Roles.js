@@ -1,7 +1,7 @@
 /* eslint import/no-unresolved: 0 */
 import db from '../../models/';
 
-const roles = {
+const Roles = {
   /**
   * Create Role
   * @param {Object} req Request object
@@ -50,9 +50,6 @@ const roles = {
   */
   getAll(req, res) {
     db.Role.findAll().then((result) => {
-      if (result < 1) {
-        return res.status(404).json({ message: 'Role not found' });
-      }
       return res.status(200).json(result);
     });
   },
@@ -106,4 +103,4 @@ const roles = {
   }
 };
 
-export default roles;
+export default Roles;

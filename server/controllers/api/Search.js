@@ -1,7 +1,7 @@
 /* eslint import/no-unresolved: 0 */
 import db from '../../models/';
 
-const search = {
+const Search = {
   /**
   * Search all Documents
   * @param {Object} req Request object
@@ -58,4 +58,4 @@ const search = {
   }
 };
 
-export default search;
+export default Search;
