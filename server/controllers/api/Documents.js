@@ -47,6 +47,8 @@ const Documents = {
       if (role && role.title === 'admin') {
         db.Document.findAll({
           attributes: ['id', 'title', 'content', 'isPublic', 'tags', 'createdAt', 'updatedAt'],
+          limit: req.query.limit || null,
+          offset: req.query.offset || null,
           order: [['createdAt', 'DESC']]
         }).then((result) => {
           if (result < 1) {
@@ -63,6 +65,8 @@ const Documents = {
               OwnerId: userId
             }]
           },
+          limit: req.query.limit || null,
+          offset: req.query.offset || null,
           order: [['createdAt', 'DESC']]
         }).then((results) => {
           if (results < 1) {
@@ -148,6 +152,8 @@ const Documents = {
             where: {
               OwnerId: queryId
             },
+            limit: req.query.limit || null,
+            offset: req.query.offset || null,
             order: [['createdAt', 'DESC']]
           }).then((docs) => {
             if (docs < 1) {
@@ -164,6 +170,8 @@ const Documents = {
                 isPublic: true
               }
             },
+            limit: req.query.limit || null,
+            offset: req.query.offset || null,
             order: [['createdAt', 'DESC']]
           }).then((docs) => {
             if (docs < 1) {

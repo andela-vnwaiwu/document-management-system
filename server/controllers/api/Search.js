@@ -25,6 +25,8 @@ const Search = {
               }
             ]
           },
+          limit: req.query.limit || null,
+          offset: req.query.offset || null,
           order: [['createdAt', 'DESC']]
         }).then((results) => {
           if (results < 1) {
@@ -46,6 +48,8 @@ const Search = {
               ]
             }
           },
+          limit: req.query.limit || null,
+          offset: req.query.offset || null,
           order: [['createdAt', 'DESC']]
         }).then((results) => {
           if (results < 1) {
