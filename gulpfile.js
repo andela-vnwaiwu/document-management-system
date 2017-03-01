@@ -11,7 +11,7 @@ gulp.task('nodemon', ['server'], () => {
   nodemon({
     script: './dist/app.js',
     ext: 'js',
-    env: { NODE_ENV: 'development' }
+    env: { NODE_ENV: process.env.NODE_ENV || 'development' }
   });
 });
 
