@@ -96,9 +96,11 @@
     "cover": "^0.2.9",
     "coveralls": "^2.11.16",
     "css-loader": "^0.26.1",
+    "events": "^1.1.1",
     "factory-girl": "^4.1.0",
     "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
+    "node-mocks-http": "^1.6.1",
     "npm-run-all": "^4.0.1",
     "style-loader": "^0.13.1"
   }
