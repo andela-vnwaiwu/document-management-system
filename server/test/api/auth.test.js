@@ -46,6 +46,7 @@ describe('Auth Suite', () => {
             done();
           });
       });
+
     it('should return an error when the signup form is missing a field',
       (done) => {
         request
@@ -57,6 +58,7 @@ describe('Auth Suite', () => {
             done();
           });
       });
+
     it('should return an error when an existing user registers again',
       (done) => {
         request
@@ -77,11 +79,12 @@ describe('Auth Suite', () => {
         .send({ email: userParams.email, password: userParams.password })
         .end((err, res) => {
           if (err) return done(err);
-          expect(res.status).to.equal(302);
+          expect(res.status).to.equal(200);
           expect(res.token).to.be.defined;
           done();
         });
     });
+
     it('should return an error if the password field is empty', (done) => {
       request
         .post('/api/users/login')
@@ -92,6 +95,7 @@ describe('Auth Suite', () => {
           done();
         });
     });
+
     it('should return an error if the email field is empty', (done) => {
       request
         .post('/api/users/login')
@@ -115,6 +119,7 @@ describe('Auth Suite', () => {
           done();
         });
     });
+
     it('should successfully logout the user if they are logged in',
       (done) => {
         agent
@@ -122,10 +127,11 @@ describe('Auth Suite', () => {
           .set('Authorization', token)
           .end((err, res) => {
             if (err) return done(err);
-            expect(res.status).to.equal(302);
+            expect(res.status).to.equal(200);
             done();
           });
       });
+
     it('should return an error when non-logged in user tries to log out',
       (done) => {
         request

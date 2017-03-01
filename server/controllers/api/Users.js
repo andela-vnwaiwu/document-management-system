@@ -30,21 +30,26 @@ const Users = {
   create(req, res) {
     db.User.findOne({
       where: {
-        email: req.body.email
+        $or: [{ email: req.body.email }, { RoleId: 1 }]
       }
     }).then((returnedUser) => {
-      if (returnedUser) {
+      if (returnedUser && returnedUser.email === req.body.email) {
         return res.status(409).json({
           message: `User with ${req.body.email} already exists`
         });
+      } else if (returnedUser && returnedUser.RoleId === 1) {
+        req.body.RoleId = 2;
+      } else {
+        req.body.RoleId = 1;
       }
+
       db.User.create({
         username: req.body.username,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
         password: req.body.password,
-        RoleId: req.body.RoleId
+        RoleId: req.body.RoleId,
       }).then((user) => {
         const jwtData = {
           username: user.username,
@@ -52,12 +57,21 @@ const Users = {
           RoleId: user.RoleId,
           userId: user.id
         };
+
         const token = jwt.sign(jwtData, secretKey, { expiresIn: 86400 });
         user = userAttributes(user);
         return res.status(201).json({ token, expiresIn: 86400, user });
       })
       .catch((error) => {
-        return res.status(400).json(error.errors);
+        const result = [];
+
+        error.errors.forEach((type) => {
+          result.push(type.path);
+        });
+
+        let errorMessage = result.join(', ');
+        errorMessage += ' cannot be empty';
+        return res.status(400).json({ message: errorMessage });
       });
     });
   },
@@ -75,9 +89,11 @@ const Users = {
           userId: user.id,
           RoleId: user.RoleId
         }, secretKey, { expiresIn: 86400 });
+
         user = userAttributes(user);
-        return res.status(302).json({ token, expiresIn: 86400, user });
+        return res.status(200).json({ token, expiresIn: 86400, user });
       }
+
       return res.status(401).json({ message: 'Failed to authenticate user' });
     });
   },
@@ -90,10 +106,12 @@ const Users = {
   */
   logout(req, res) {
     const token = req.headers.authorization || req.headers['x-access-token'];
+
     if (!token) {
       return res.status(400).json({ message: 'User not logged in before' });
     }
-    return res.status(302).json({ message: 'User successfully logged out' });
+
+    return res.status(200).json({ message: 'User successfully logged out' });
   },
 
   /**
@@ -103,20 +121,15 @@ const Users = {
   * @returns {Object} - Returns response object
   */
   findAll(req, res) {
-    db.User.findAll({
-      attributes: [
-        'id',
-        'username',
-        'firstName',
-        'lastName',
-        'email',
-        'RoleId',
-        'createdAt',
-        'updatedAt'
-      ],
-      order: [['createdAt', 'DESC']]
-    }).then((result) => {
-      return res.status(200).json({ users: result });
+    const query = {};
+    query.attributes = ['id', 'username', 'firstName', 'lastName', 'email',
+      'RoleId', 'createdAt', 'updatedAt'];
+    query.limit = req.query.limit || null;
+    query.offset = req.query.offset || null;
+    query.order = [['createdAt', 'DESC']];
+
+    db.User.findAndCountAll(query).then((result) => {
+      return res.status(200).json({ users: result.rows, count: result.count });
     });
   },
 
@@ -132,6 +145,7 @@ const Users = {
       if (!user) {
         return res.status(404).json({ message: 'No user with Id found' });
       }
+
       user = userAttributes(user);
       return res.status(200).json(user);
     });
@@ -145,13 +159,23 @@ const Users = {
   */
   updateOne(req, res) {
     const userId = req.params.id;
+    const roleId = req.decoded.RoleId;
+
     db.User.findById(userId).then((user) => {
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
-      user.update(req.body).then((result) => {
-        const updatedUser = userAttributes(result);
-        return res.status(200).json({ user: updatedUser });
+
+      db.Role.findById(roleId).then((role) => {
+        if (role && role.title !== 'admin') {
+          req.body.RoleId = user.RoleId;
+        }
+
+        user.update(req.body).then((result) => {
+          const updatedUser = userAttributes(result);
+          return res.status(200)
+            .json({ user: updatedUser, message: 'user updated successfully' });
+        });
       });
     });
   },
@@ -174,6 +198,7 @@ const Users = {
           return res.status(403)
             .json({ message: 'You cannot delete the admin' });
         }
+
         db.User.destroy({
           where: {
             id: userId
@@ -182,6 +207,7 @@ const Users = {
           if (!result) {
             return res.status(404).json({ message: 'No user found to delete' });
           }
+
           return res.status(200).json({ message: 'User successfully deleted' });
         });
       });

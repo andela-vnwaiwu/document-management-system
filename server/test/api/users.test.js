@@ -73,9 +73,26 @@ describe('User Suite', () => {
           .end((err, res) => {
             if (err) return done(err);
             expect(res.status).to.equal(200);
+            expect(res.body.count).to.equal(2);
+            expect(res.body.users[0].firstName).to.equal(secondUser.firstName);
             done();
           });
       });
+
+    it(`should successfully get all users if the user has
+        admin role with pagination`, (done) => {
+      request
+        .get('/api/users?limit=2&page=1')
+        .set('authorization', token)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(200);
+          expect(res.body.count).to.equal(2);
+          expect(res.body.users[0].firstName).to.equal(secondUser.firstName);
+          done();
+        });
+    });
+
     it('should return an error if no token is passed', (done) => {
       request
         .get('/api/users')
@@ -85,6 +102,7 @@ describe('User Suite', () => {
           done();
         });
     });
+
     it('should return an error if the user is not an admin', (done) => {
       request
         .get('/api/users')
@@ -110,6 +128,7 @@ describe('User Suite', () => {
           done();
         });
     });
+
     it('returns the details of the particular user', (done) => {
       request
         .get(`/api/users/${thirdUserResult.id}`)
@@ -120,6 +139,7 @@ describe('User Suite', () => {
           done();
         });
     });
+
     it('should return not found if the user has not been saved', (done) => {
       request
         .get(`/api/users/${thirdUserResult.id * 5}`)
@@ -130,6 +150,7 @@ describe('User Suite', () => {
           done();
         });
     });
+
     it('should return an error if the user is not logged in', (done) => {
       request
         .get(`/api/users/${thirdUserResult.id}`)
@@ -168,17 +189,20 @@ describe('User Suite', () => {
           done();
         });
     });
-    it('should return an error when trying to update a non-existing user', (done) => {
-      request
-        .put(`/api/users/${userId * 8}`)
-        .set('authorization', token)
-        .send(updateDetails)
-        .end((err, res) => {
-          if (err) return done(err);
-          expect(res.status).to.equal(404);
-          done();
-        });
-    });
+
+    it('should return an error when trying to update a non-existing user',
+      (done) => {
+        request
+          .put(`/api/users/${userId * 8}`)
+          .set('authorization', token)
+          .send(updateDetails)
+          .end((err, res) => {
+            if (err) return done(err);
+            expect(res.status).to.equal(404);
+            done();
+          });
+      });
+
     it('returns an error if the user is not an admin or owner', (done) => {
       request
         .put(`/api/users/${userId}`)
@@ -204,16 +228,19 @@ describe('User Suite', () => {
           done();
         });
     });
-    it('should return an error if the user does not have admin role', (done) => {
-      request
-        .delete(`/api/users/${deleteUser}`)
-        .set('Authorization', deleteToken)
-        .end((err, res) => {
-          if (err) return done(err);
-          expect(res.status).to.equal(403);
-          done();
-        });
-    });
+
+    it('should return an error if the user does not have admin role',
+      (done) => {
+        request
+          .delete(`/api/users/${deleteUser}`)
+          .set('Authorization', deleteToken)
+          .end((err, res) => {
+            if (err) return done(err);
+            expect(res.status).to.equal(403);
+            done();
+          });
+      });
+
     it('should return an error when trying to delete the admin', (done) => {
       request
         .delete(`/api/users/${adminUser.id}`)
@@ -224,6 +251,7 @@ describe('User Suite', () => {
           done();
         });
     });
+
     it('should delete another user if the user has a role admin', (done) => {
       request
         .delete(`/api/users/${deleteUser}`)
@@ -234,6 +262,7 @@ describe('User Suite', () => {
           done();
         });
     });
+
     it('should return an error if the user does not exist', (done) => {
       request
         .delete(`/api/users/${deleteUser}`)

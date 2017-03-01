@@ -17,12 +17,10 @@ const Roles = {
       if (result) {
         return res.status(409).json({ message: 'Role already exists' });
       }
-      db.Role.create(req.body).then((role) => {
-        return res.status(201).json(role);
-      })
-      .catch((error) => {
-        return res.status(400).json(error);
-      });
+
+      db.Role.create(req.body)
+        .then(role => res.status(201).json(role))
+        .catch(() => res.status(400).json({ message: 'title cannot be empty ' }));
     });
   },
 
@@ -49,9 +47,13 @@ const Roles = {
   * @returns {Object} - Returns response object
   */
   getAll(req, res) {
-    db.Role.findAll().then((result) => {
-      return res.status(200).json(result);
-    });
+    const query = {};
+    query.limit = (req.query.limit > 0) ? req.query.limit : null;
+    query.offset = (req.query.page - 1 > 0) ? req.query.page - 1 : null;
+    query.order = [['createdAt', 'DESC']];
+
+    db.Role.findAndCountAll(query).then(result => res.status(200)
+      .json({ result: result.rows, count: result.count }));
   },
 
   /**
@@ -70,9 +72,9 @@ const Roles = {
         if (!role) {
           return res.status(404).json({ message: 'role not found to update' });
         }
-        role.update(req.body).then((updatedRole) => {
-          return res.status(200).json(updatedRole);
-        });
+        role.update(req.body)
+          .then(updatedRole => res.status(200)
+            .json({ updatedRole, message: 'role updated successfully' }));
       });
     });
   },

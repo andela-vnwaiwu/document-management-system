@@ -58,6 +58,7 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role exists', (done) => {
       request
         .post('/api/roles')
@@ -69,6 +70,7 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if no title is passed', (done) => {
       request
         .post('/api/roles')
@@ -94,6 +96,7 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role does not exists', (done) => {
       request
         .put(`/api/roles/${newRole.id * 8}`)
@@ -105,6 +108,7 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role is the admin role', (done) => {
       request
         .put('/api/roles/1')
@@ -119,13 +123,28 @@ describe('Roles Suite', () => {
   });
 
   describe('Get All Roles GET: /api/roles', () => {
-    it('returns all the roles', (done) => {
+    it('returns all the roles with pagination', (done) => {
       request
-        .get('/api/roles')
+        .get('/api/roles?limit=2&page=1')
         .set('authorization', adminToken)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
+          expect(res.body.count).to.equal(3);
+          expect(res.body.result.length).to.equal(2);
+          done();
+        });
+    });
+
+    it('returns all the roles in the second page with pagination', (done) => {
+      request
+        .get('/api/roles?limit=2&page=3')
+        .set('authorization', adminToken)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(200);
+          expect(res.body.count).to.equal(3);
+          expect(res.body.result.length).to.equal(1);
           done();
         });
     });
@@ -142,6 +161,7 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role does not exists', (done) => {
       request
         .get(`/api/roles/${newRole.id * 8}`)
@@ -165,6 +185,7 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role does not exists', (done) => {
       request
         .delete(`/api/roles/${newRole.id * 8}`)
@@ -175,6 +196,7 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role is the admin role', (done) => {
       request
         .delete('/api/roles/1')

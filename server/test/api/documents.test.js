@@ -18,35 +18,28 @@ const expect = chai.expect;
 const request = supertest(app);
 
 describe('Document suite', () => {
-  let user, secondUser, thirdUser, token, userToken, firstDocument, secondDocument, badDocument;
-  let privateDoc, adminDoc, adminDocument, secondUserResult, adminUserResult;
+  let token, userToken;
+  let adminDoc, adminDocument, secondUserResult, adminUserResult;
   let adminRole, regularRole;
   before((done) => {
-    user = factory.users;
-    secondUser = factory.secondUser;
-    thirdUser = factory.thirdUser;
-    firstDocument = sampleDoc.first;
-    secondDocument = sampleDoc.second;
-    badDocument = sampleDoc.badDoc;
-    privateDoc = sampleDoc.third;
     db.Role.bulkCreate([factory.adminRole, factory.regularRole], {
       returning: true
     }).then((newRoles) => {
       adminRole = newRoles[0];
       regularRole = newRoles[1];
-      secondUser.RoleId = regularRole.id;
-      thirdUser.RoleId = regularRole.id;
-      user.RoleId = adminRole.id;
+      factory.secondUser.RoleId = regularRole.id;
+      factory.thirdUser.RoleId = regularRole.id;
+      factory.users.RoleId = adminRole.id;
 
       request.post('/api/users/signup')
-        .send(user)
+        .send(factory.users)
         .end((err, res) => {
           adminUserResult = res.body.user;
           token = res.body.token;
-          firstDocument.OwnerId = adminUserResult.id;
+          sampleDoc.first.OwnerId = adminUserResult.id;
           request
             .post('/api/documents')
-            .send(firstDocument)
+            .send(sampleDoc.first)
             .set('authorization', token)
             .end((err, res) => {
               adminDocument = res.body;
@@ -83,10 +76,11 @@ describe('Document suite', () => {
             });
         });
     });
+
     it('returns an error to a user if no documents exists', (done) => {
       request
         .post('/api/users/signup')
-        .send(secondUser)
+        .send(factory.secondUser)
         .end((err, res) => {
           if (err) return done(err);
           userToken = res.body.token;
@@ -101,6 +95,7 @@ describe('Document suite', () => {
             });
         });
     });
+
     it('returns an error if a user has no document', (done) => {
       request
         .get(`/api/users/${secondUserResult.id}/documents`)
@@ -111,6 +106,7 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('returns an error to the admin if a user has no document', (done) => {
       request
         .get(`/api/users/${secondUserResult.id}/documents`)
@@ -127,7 +123,7 @@ describe('Document suite', () => {
     it('should create a document successfully', (done) => {
       request
         .post('/api/documents')
-        .send(firstDocument)
+        .send(sampleDoc.first)
         .set('authorization', token)
         .end((err, res) => {
           adminDoc = res.body;
@@ -137,20 +133,22 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('should not create a document if the user is not logged in', (done) => {
       request
         .post('/api/documents')
-        .send(firstDocument)
+        .send(sampleDoc.first)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(401);
           done();
         });
     });
+
     it('should return an error if any field is missing', (done) => {
       request
         .post('/api/documents')
-        .send(badDocument)
+        .send(sampleDoc.badDoc)
         .set('authorization', token)
         .end((err, res) => {
           if (err) return done(err);
@@ -165,12 +163,12 @@ describe('Document suite', () => {
     before((done) => {
       request
       .post('/api/users/login')
-      .send(secondUser)
+      .send(factory.secondUser)
       .end((err, res) => {
         secondToken = res.body.token;
         request
           .post('/api/documents')
-          .send(secondDocument)
+          .send(sampleDoc.second)
           .set('authorization', secondToken)
           .end((err, res) => {
             if (err) done(err);
@@ -178,6 +176,7 @@ describe('Document suite', () => {
           });
       });
     });
+
     it('should get all documents if the user is an admin', (done) => {
       request
         .get('/api/documents')
@@ -185,9 +184,38 @@ describe('Document suite', () => {
         .end((err, res) => {
           expect(res.status).to.equal(200);
           expect(res.body.length).to.be.defined;
+          expect(res.body.count).to.equal(2);
           done();
         });
     });
+
+    it('should limit and paginate the result shown', (done) => {
+      request
+        .get('/api/documents?limit=1&page=1')
+        .set('authorization', token)
+        .end((err, res) => {
+          expect(res.status).to.equal(200);
+          expect(res.body.length).to.be.defined;
+          expect(res.body.count).to.equal(2);
+          expect(res.body.result.length).to.equal(1);
+          done();
+        });
+    });
+
+    it('should return the result for the other page', (done) => {
+      request
+        .get('/api/documents?limit=1&page=2')
+        .set('authorization', token)
+        .end((err, res) => {
+          expect(res.status).to.equal(200);
+          expect(res.body.length).to.be.defined;
+          expect(res.body.count).to.equal(2);
+          expect(res.body.result.length).to.equal(1);
+          expect(res.body.result[0].isPublic).to.be.true;
+          done();
+        });
+    });
+
     it('returns document that belongs to the user and are public', (done) => {
       request
         .get('/api/documents')
@@ -197,6 +225,7 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('returns an error if the user is not logged in', (done) => {
       request
         .get('/api/documents')
@@ -212,12 +241,13 @@ describe('Document suite', () => {
     before((done) => {
       request
         .post('/api/users/login')
-        .send(secondUser)
+        .send(factory.secondUser)
         .end((err, res) => {
           secondToken = res.body.token;
           done();
         });
     });
+
     it('returns the document if the document has public access', (done) => {
       request
         .get(`/api/documents/${adminDoc.id}`)
@@ -228,6 +258,7 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('returns an error if the document does not exist', (done) => {
       request
         .get(`/api/documents/${adminDoc.id * 8}`)
@@ -238,11 +269,11 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('returns an error if the document has private access', (done) => {
-      privateDoc.OwnerId = adminUserResult.id;
       request
         .post('/api/documents')
-        .send(privateDoc)
+        .send(sampleDoc.third)
         .set('authorization', token)
         .end((err, res) => {
           if (err) done(err);
@@ -257,14 +288,15 @@ describe('Document suite', () => {
             });
         });
     });
+
     it('returns the document if the document belongs to the user', (done) => {
       request
         .post('/api/users/login')
-        .send(secondUser)
+        .send(factory.secondUser)
         .end((err, res) => {
           request
             .post('/api/documents')
-            .send(privateDoc)
+            .send(sampleDoc.third)
             .set('authorization', res.body.token)
             .end((err, res) => {
               const doc = res.body;
@@ -286,12 +318,12 @@ describe('Document suite', () => {
     before((done) => {
       request
         .post('/api/users/login')
-        .send(secondUser)
+        .send(factory.secondUser)
         .end((err, res) => {
           userToken = res.body.token;
           request
             .post('/api/documents')
-            .send(firstDocument)
+            .send(sampleDoc.first)
             .set('authorization', userToken)
             .end((err, res) => {
               result = res.body;
@@ -299,10 +331,11 @@ describe('Document suite', () => {
             });
         });
     });
+
     it('successfully updates a document', (done) => {
       request
         .put(`/api/documents/${result.id}`)
-        .send(secondDocument)
+        .send(sampleDoc.second)
         .set('authorization', userToken)
         .end((err, res) => {
           if (err) done(err);
@@ -310,10 +343,11 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('returns an error if it does not belong to the user', (done) => {
       request
         .put(`/api/documents/${adminDoc.id}`)
-        .send(secondDocument)
+        .send(sampleDoc.second)
         .set('authorization', userToken)
         .end((err, res) => {
           if (err) return done(err);
@@ -321,11 +355,12 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('returns an error when trying to update a document that does not exist',
       (done) => {
         request
         .put(`/api/documents/${result.id * 4}`)
-        .send(secondDocument)
+        .send(sampleDoc.second)
         .set('authorization', token)
         .end((err, res) => {
           if (err) done(err);
@@ -333,10 +368,11 @@ describe('Document suite', () => {
           done();
         });
       });
+
     it('returns an error if the user is not logged in', (done) => {
       request
         .put(`/api/documents/${result.id}`)
-        .send(secondDocument)
+        .send(sampleDoc.second)
         .end((err, res) => {
           if (err) done(err);
           expect(res.status).to.equal(401);
@@ -346,43 +382,50 @@ describe('Document suite', () => {
   });
 
   describe('Get A User\'s Documents GET: /api/users/:id/documents', () => {
-    let userResult;
+    let userResult, secondToken;
     before((done) => {
       request
         .post('/api/users/login')
-        .send(secondUser)
+        .send(factory.secondUser)
         .end((err, res) => {
-          userToken = res.body.token;
+          secondToken = res.body.token;
           userResult = res.body.user;
           request
             .post('/api/documents')
-            .send(firstDocument)
-            .set('authorization', userToken)
+            .send(sampleDoc.first)
+            .set('authorization', secondToken)
             .end((err, res) => {
               done();
             });
         });
     });
+
     it('returns all documents that belongs to a user', (done) => {
       request
-        .get(`/api/users/${userResult.id}/documents`)
-        .set('authorization', userToken)
+        .get(`/api/users/${userResult.id}/documents?limit=2&page=1`)
+        .set('authorization', secondToken)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
+          expect(res.body.count).to.equal(4);
+          expect(res.body.result.length).to.equal(2);
           done();
         });
     });
+
     it('returns all documents that belongs to a user to the admin', (done) => {
       request
-        .get(`/api/users/${userResult.id}/documents`)
+        .get(`/api/users/${userResult.id}/documents?limit=2&page=2`)
         .set('authorization', token)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
+          expect(res.body.count).to.equal(4);
+          expect(res.body.result.length).to.equal(2);
           done();
         });
     });
+
     it('returns an error if the user is not logged in', (done) => {
       request
         .get(`/api/users/${userResult.id}/documents`)
@@ -392,19 +435,22 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('returns only documents that are public to another user', (done) => {
       let thirdToken;
       request
         .post('/api/users/signup')
-        .send(thirdUser)
+        .send(factory.thirdUser)
         .end((err, res) => {
           thirdToken = res.body.token;
           request
-            .get(`/api/users/${userResult.id}/documents`)
+            .get(`/api/users/${userResult.id}/documents?limit=2&page1`)
             .set('authorization', thirdToken)
             .end((err, res) => {
               if (err) return done(err);
               expect(res.status).to.equal(200);
+              expect(res.body.count).to.equal(3);
+              expect(res.body.result.length).to.equal(2);
               done();
             });
         });
@@ -416,12 +462,12 @@ describe('Document suite', () => {
     before((done) => {
       request
         .post('/api/users/login')
-        .send(secondUser)
+        .send(factory.secondUser)
         .end((err, res) => {
           userToken = res.body.token;
           request
             .post('/api/documents')
-            .send(firstDocument)
+            .send(sampleDoc.first)
             .set('authorization', userToken)
             .end((err, res) => {
               userResult = res.body;
@@ -429,6 +475,7 @@ describe('Document suite', () => {
             });
         });
     });
+
     it('returns an error if the user is not an admin or owner', (done) => {
       request
         .delete(`/api/documents/${adminDoc.id}`)
@@ -439,6 +486,7 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('returns an error if the user is not logged in', (done) => {
       request
         .delete(`/api/documents/${adminDoc.id}`)
@@ -448,6 +496,7 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('deletes the document if the user is the owner', (done) => {
       request
         .delete(`/api/documents/${adminDoc.id}`)
@@ -458,6 +507,7 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('deletes the document if the user is the admin', (done) => {
       request
         .delete(`/api/documents/${userResult.id}`)
@@ -468,6 +518,7 @@ describe('Document suite', () => {
           done();
         });
     });
+
     it('returns an error if document could not be found', (done) => {
       request
         .delete(`/api/documents/${userResult.id * 8}`)

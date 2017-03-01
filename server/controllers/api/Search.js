@@ -11,53 +11,34 @@ const Search = {
   searchAll(req, res) {
     const userId = req.decoded.userId;
     const roleId = req.decoded.RoleId;
-    const query = req.query.text;
+    const searchTerm = req.query.text;
+    const query = {};
+    query.limit = (req.query.limit > 0) ? req.query.limit : null;
+    query.offset = (req.query.page - 1 > 0) ? req.query.page - 1 : null;
+    query.order = [['createdAt', 'DESC']];
+
     db.Role.findById(roleId).then((role) => {
       if (role && role.title === 'admin') {
-        db.Document.findAll({
-          where: {
-            $or: [
-              {
-                title: { $iLike: `%${query}%` }
-              },
-              {
-                content: { $iLike: `%${query}%` }
-              }
-            ]
-          },
-          limit: req.query.limit || null,
-          offset: req.query.offset || null,
-          order: [['createdAt', 'DESC']]
-        }).then((results) => {
-          if (results < 1) {
-            return res.status(404).json({ results, message: 'No matching result' });
-          }
-          return res.status(200).json(results);
-        });
+        query.where = { $or: [
+          { title: { $iLike: `%${searchTerm}%` } },
+          { content: { $iLike: `%${searchTerm}%` } }
+        ] };
       } else {
-        db.Document.findAll({
-          where: {
-            $or: [
-              { title: { $iLike: `%${query}%` } },
-              { content: { $iLike: `%${query}%` } }
-            ],
-            $and: {
-              $or: [
-                { isPublic: true },
-                { OwnerId: userId }
-              ]
-            }
-          },
-          limit: req.query.limit || null,
-          offset: req.query.offset || null,
-          order: [['createdAt', 'DESC']]
-        }).then((results) => {
-          if (results < 1) {
-            return res.status(404).json({ results, message: 'No matching result' });
-          }
-          return res.status(200).json(results);
-        });
+        query.where = { $or: [
+          { title: { $iLike: `%${searchTerm}%` } },
+          { content: { $iLike: `%${searchTerm}%` } }],
+          $and: { $or: [{ isPublic: true }, { OwnerId: userId }]
+          } };
       }
+
+      db.Document.findAndCountAll(query).then((result) => {
+        if (result.count < 1) {
+          return res.status(404).json({ message: 'No matching result' });
+        }
+
+        return res.status(200)
+          .json({ result: result.rows, count: result.count });
+      });
     });
   }
 };
