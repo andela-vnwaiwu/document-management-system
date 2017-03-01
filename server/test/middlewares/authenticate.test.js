@@ -1,4 +1,5 @@
 /* eslint import/no-extraneous-dependencies: 0 */
+/* eslint import/no-unresolved: 0 */
 /* eslint no-unused-vars: [2, { "args": "none" }] */
 /* eslint no-underscore-dangle: 0 */
 import 'babel-polyfill';
