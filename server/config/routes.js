@@ -10,7 +10,10 @@ const routes = (router, authenticate) => {
 
   // Users routes
   router.post('/users/login', Users.login);
-  router.post('/users/signup', Users.create);
+  router.post('/users/signup', Users.signup);
+  router
+    .route('/users/create-admin')
+    .post(authenticate.verifyToken, authenticate.isAdmin, Users.createAdmin);
   router.post('/users/logout', Users.logout);
 
   router.get('/users', authenticate.verifyToken, authenticate.isAdmin, Users.findAll);
