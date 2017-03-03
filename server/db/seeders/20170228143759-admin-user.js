@@ -1,6 +1,7 @@
 'use strict';
 require('dotenv').config();
 const faker = require('faker');
+const bcrypt = require('bcrypt-nodejs');
 
 module.exports = {
   up: function (queryInterface, Sequelize) {
@@ -10,7 +11,7 @@ module.exports = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
       email: process.env.ADMIN_EMAIL,
-      password: process.env.ADMIN_PASSWORD,
+      password: bcrypt.hashSync(process.env.ADMIN_PASSWORD, bcrypt.genSaltSync(10)),
       RoleId: 1,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -20,7 +21,7 @@ module.exports = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
       email: process.env.USER_EMAIL,
-      password:process.env.USER_PASSWORD,
+      password:bcrypt.hashSync(process.env.USER_PASSWORD, bcrypt.genSaltSync(10)),
       RoleId: 2,
       createdAt: new Date(),
       updatedAt: new Date()
