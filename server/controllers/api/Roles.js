@@ -1,5 +1,6 @@
 /* eslint import/no-unresolved: 0 */
 import db from '../../models/';
+import ErrorHandler from '../helpers/ErrorHandler';
 
 const Roles = {
   /**
@@ -37,7 +38,8 @@ const Roles = {
         return res.status(404).json({ message: 'Role not found' });
       }
       return res.status(200).json(result);
-    });
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   },
 
   /**
@@ -52,8 +54,10 @@ const Roles = {
     query.offset = (req.query.page - 1 > 0) ? req.query.page - 1 : null;
     query.order = [['createdAt', 'DESC']];
 
-    db.Role.findAndCountAll(query).then(result => res.status(200)
-      .json({ result: result.rows, count: result.count }));
+    db.Role.findAndCountAll(query)
+      .then(result => res.status(200)
+        .json({ result: result.rows, count: result.count }))
+      .catch(error => ErrorHandler.processError(res, 500, error));
   },
 
   /**
@@ -75,8 +79,10 @@ const Roles = {
         role.update(req.body)
           .then(updatedRole => res.status(200)
             .json({ updatedRole, message: 'role updated successfully' }));
-      });
-    });
+      })
+      .catch(error => ErrorHandler.processError(res, 500, error));
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   },
 
   /**
@@ -100,8 +106,10 @@ const Roles = {
           return res.status(404).json({ message: 'No role found to delete' });
         }
         return res.status(200).json({ message: 'Role successfully deleted' });
-      });
-    });
+      })
+      .catch(error => ErrorHandler.processError(res, 500, error));
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   }
 };
 

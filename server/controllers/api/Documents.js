@@ -1,20 +1,7 @@
 /* eslint import/no-unresolved: 0 */
 import db from '../../models/';
-
-const docAttributes = (doc) => {
-  const attributes = {
-    id: doc.id,
-    title: doc.title,
-    content: doc.content,
-    OwnerId: doc.OwnerId,
-    isPublic: doc.isPublic,
-    tags: doc.tags,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt
-  };
-
-  return attributes;
-};
+import ErrorHandler from '../helpers/ErrorHandler';
+import DocumentHelper from '../helpers/DocumentHelper';
 
 const Documents = {
  /**
@@ -26,19 +13,10 @@ const Documents = {
   create(req, res) {
     req.body.OwnerId = req.decoded.userId;
     db.Document.create(req.body).then((doc) => {
-      const document = docAttributes(doc);
+      const document = DocumentHelper.transformDocument(doc);
       return res.status(200).json(document);
     })
-    .catch((error) => {
-      const result = [];
-      error.errors.forEach((type) => {
-        result.push(type.path);
-      });
-
-      let errorMessage = result.join(', ');
-      errorMessage += ' cannot be empty';
-      return res.status(400).json({ message: errorMessage });
-    });
+    .catch(error => ErrorHandler.processError(res, 400, error));
   },
 
   /**
@@ -85,9 +63,10 @@ const Documents = {
         return res.status(404).json({ message: 'Document not found' });
       }
 
-      const document = docAttributes(result);
+      const document = DocumentHelper.transformDocument(result);
       return res.status(200).json(document);
-    });
+    })
+    .catch(error => ErrorHandler.processError(res, 400, error));
   },
 
   /**
@@ -108,7 +87,8 @@ const Documents = {
 
       result.update(req.body).then(updatedResult => res.status(200)
         .json({ message: 'Document updated successfully', updatedResult }));
-    });
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   },
 
   /**
@@ -131,7 +111,8 @@ const Documents = {
       }
 
       return res.status(200).json({ message: 'Document deleted successfully' });
-    });
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   },
 
   /**
@@ -163,9 +144,11 @@ const Documents = {
 
           return res.status(200)
             .json({ result: result.rows, count: result.count });
-        });
+        })
+        .catch(error => ErrorHandler.processError(res, 500, error));
       }
-    });
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   }
 };
 

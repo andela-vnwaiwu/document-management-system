@@ -1,24 +1,10 @@
 /* eslint import/no-unresolved: 0 */
 import jwt from 'jsonwebtoken';
 import db from '../../models/';
+import ErrorHandler from '../helpers/ErrorHandler';
+import UserHelper from '../helpers/UserHelper';
 
 const secretKey = process.env.JWT_SECRET_KEY || 'jhebefuehf7yu3832978ry09iofe';
-
-const userAttributes = (user) => {
-  const attributes = {
-    id: user.id,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    RoleId: user.RoleId,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt
-  };
-
-  return attributes;
-};
-
 
 const Users = {
   /**
@@ -27,30 +13,26 @@ const Users = {
   * @param {Object} res Response object
   * @returns {Object} - Returns response object
   */
-  create(req, res) {
-    db.User.findOne({
+  signup(req, res) {
+    db.User.findAndCountAll({
       where: {
         $or: [{ email: req.body.email }, { RoleId: 1 }]
       }
-    }).then((returnedUser) => {
-      if (returnedUser && returnedUser.email === req.body.email) {
-        return res.status(409).json({
-          message: `User with ${req.body.email} already exists`
-        });
-      } else if (returnedUser && returnedUser.RoleId === 1) {
-        req.body.RoleId = 2;
-      } else {
-        req.body.RoleId = 1;
+    }).then((returnedUsers) => {
+      const result = returnedUsers.rows;
+      const checkEmail = UserHelper.searchUserResult(result, 'email', req.body.email);
+      const checkRoleId = UserHelper
+        .searchUserResult(result, 'RoleId', Number(req.body.RoleId));
+
+      if (checkEmail) {
+        return res.status(409)
+          .json({ message: `User with ${req.body.email} already exists` });
+      } else if (checkRoleId) {
+        return res.status(409)
+          .json({ message: 'You cannot create another admin' });
       }
 
-      db.User.create({
-        username: req.body.username,
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        email: req.body.email,
-        password: req.body.password,
-        RoleId: req.body.RoleId,
-      }).then((user) => {
+      db.User.create(req.body).then((user) => {
         const jwtData = {
           username: user.username,
           email: user.email,
@@ -59,20 +41,10 @@ const Users = {
         };
 
         const token = jwt.sign(jwtData, secretKey, { expiresIn: 86400 });
-        user = userAttributes(user);
+        user = UserHelper.transformUser(user);
         return res.status(201).json({ token, expiresIn: 86400, user });
       })
-      .catch((error) => {
-        const result = [];
-
-        error.errors.forEach((type) => {
-          result.push(type.path);
-        });
-
-        let errorMessage = result.join(', ');
-        errorMessage += ' cannot be empty';
-        return res.status(400).json({ message: errorMessage });
-      });
+      .catch(error => ErrorHandler.processError(res, 400, error));
     });
   },
 
@@ -90,12 +62,13 @@ const Users = {
           RoleId: user.RoleId
         }, secretKey, { expiresIn: 86400 });
 
-        user = userAttributes(user);
+        user = UserHelper.transformUser(user);
         return res.status(200).json({ token, expiresIn: 86400, user });
       }
 
       return res.status(401).json({ message: 'Failed to authenticate user' });
-    });
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   },
 
   /**
@@ -146,7 +119,7 @@ const Users = {
         return res.status(404).json({ message: 'No user with Id found' });
       }
 
-      user = userAttributes(user);
+      user = UserHelper.transformUser(user);
       return res.status(200).json(user);
     });
   },
@@ -172,7 +145,7 @@ const Users = {
         }
 
         user.update(req.body).then((result) => {
-          const updatedUser = userAttributes(result);
+          const updatedUser = UserHelper.transformUser(result);
           return res.status(200)
             .json({ user: updatedUser, message: 'user updated successfully' });
         });
@@ -188,30 +161,66 @@ const Users = {
   */
   remove(req, res) {
     const userId = req.params.id;
-    db.Role.findOne({
-      where: {
-        title: 'admin'
-      }
-    }).then((role) => {
-      db.User.findById(userId).then((user) => {
-        if (user && user.RoleId === role.id) {
-          return res.status(403)
-            .json({ message: 'You cannot delete the admin' });
+    db.Role.findOne({ where: { title: 'admin' } })
+      .then((role) => {
+        if (role) {
+          db.User.findAndCountAll({ where: { RoleId: role.id } })
+            .then((users) => {
+              const lastAdmin = users.rows[0].dataValues.id;
+              if (users.count < 2 && lastAdmin === Number(userId)) {
+                return res.status(403)
+                  .json({ message: 'You cannot delete the Admin' });
+              }
+              db.User.destroy({ where: { id: userId } })
+                .then((result) => {
+                  if (!result) {
+                    return res.status(404)
+                      .json({ message: 'No user found to delete' });
+                  }
+
+                  return res.status(200)
+                    .json({ message: 'User successfully deleted' });
+                });
+            });
         }
-
-        db.User.destroy({
-          where: {
-            id: userId
-          }
-        }).then((result) => {
-          if (!result) {
-            return res.status(404).json({ message: 'No user found to delete' });
-          }
-
-          return res.status(200).json({ message: 'User successfully deleted' });
-        });
       });
-    });
+  },
+
+  /**
+  * Create an admin user
+  * @param {Object} req Request object
+  * @param {Object} res Response object
+  * @returns {Object} - Returns response object
+  */
+  createAdmin(req, res) {
+    db.Role.findOne({ where: { title: 'admin' } })
+      .then((role) => {
+        req.body.RoleId = role.id;
+
+        db.User.findOne({ where: { email: req.body.email } })
+          .then((user) => {
+            if (user) {
+              return res.status(409)
+                .json({ message: `User with ${req.body.email} exists` });
+            }
+
+            db.User.create(req.body)
+              .then((result) => {
+                const jwtData = {
+                  username: result.username,
+                  email: result.email,
+                  RoleId: result.RoleId,
+                  userId: result.id
+                };
+
+                const token = jwt.sign(jwtData, secretKey, { expiresIn: 86400 });
+                result = UserHelper.transformUser(result);
+                return res.status(201)
+                  .json({ token, expiresIn: 86400, result });
+              })
+              .catch(error => ErrorHandler.processError(res, 400, error));
+          });
+      });
   }
 };
 

@@ -1,5 +1,6 @@
 /* eslint import/no-unresolved: 0 */
 import db from '../../models/';
+import ErrorHandler from '../helpers/ErrorHandler';
 
 const Search = {
   /**
@@ -38,8 +39,10 @@ const Search = {
 
         return res.status(200)
           .json({ result: result.rows, count: result.count });
-      });
-    });
+      })
+      .catch(error => ErrorHandler.processError(res, 500, error));
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   }
 };
 
