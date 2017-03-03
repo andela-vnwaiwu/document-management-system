@@ -2,13 +2,23 @@ const bcrypt = require('bcrypt-nodejs');
 
 module.exports = function (sequelize, DataTypes) {
   var User = sequelize.define('User', {
+    email: {
+      allowNull: false,
+      type: DataTypes.STRING,
+      unique: true,
+      validate: {
+        isEmail:{
+          msg: 'Invalid email address provided'
+        }
+      }
+    },
     username: {
       allowNull: false,
       type: DataTypes.STRING,
       unique: true,
       validate: {
         notEmpty: {
-          msg: 'LastName cannot be empty'
+          msg: 'Username cannot be empty'
         }
       }
     },
@@ -17,7 +27,7 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.STRING,
       validate: {
         notEmpty: {
-          msg: 'LastName cannot be empty'
+          msg: 'FirstName cannot be empty'
         }
       }
     },
@@ -27,16 +37,6 @@ module.exports = function (sequelize, DataTypes) {
       validate: {
         notEmpty: {
           msg: 'LastName cannot be empty'
-        }
-      }
-    },
-    email: {
-      allowNull: false,
-      type: DataTypes.STRING,
-      unique: true,
-      validate: {
-        isEmail:{
-          msg: 'Invalid email address provided'
         }
       }
     },
