@@ -11,6 +11,14 @@ module.exports = {
     password: faker.internet.password()
   },
 
+  secondAdmin: {
+    username: 'secondOga',
+    firstName: 'Yokohama',
+    lastName: 'Suzuki',
+    email: 'secondOga@test.com',
+    password: 'nakata'
+  },
+
   adminRole: {
     title: 'admin'
   },

@@ -21,7 +21,7 @@ const request = supertest(app);
 
 describe('User Suite', () => {
   let user, token, secondUser, thirdUser, updateDetails, userDetails, adminUser;
-  let adminRole, regularRole, userToken;
+  let adminRole, regularRole, userToken, secondAdmin;
   before((done) => {
     user = factory.users;
     secondUser = factory.secondUser;
@@ -34,6 +34,7 @@ describe('User Suite', () => {
       secondUser.RoleId = regularRole.id;
       thirdUser.RoleId = regularRole.id;
       user.RoleId = adminRole.id;
+      factory.secondAdmin.RoleId = adminRole.id;
 
       request.post('/api/users/signup')
         .send(user)
@@ -51,6 +52,35 @@ describe('User Suite', () => {
         done();
       });
     });
+  });
+
+  describe('Create an Admin POST: /api/users', () => {
+    it('creates another admin if the creator is an admin', (done) => {
+      request
+        .post('/api/users/create-admin')
+        .send(factory.secondAdmin)
+        .set('authorization', token)
+        .end((err, res) => {
+          if (err) return done(err);
+          secondAdmin = res.body.result;
+          expect(res.status).to.equal(201);
+          expect(res.body.result.RoleId).to.equal(1);
+          done();
+        });
+    });
+
+    it('returns an error if the admin wants to create an already existing user',
+      (done) => {
+        request
+          .post('/api/users/create-admin')
+          .send(factory.secondAdmin)
+          .set('authorization', token)
+          .end((err, res) => {
+            if (err) return done(err);
+            expect(res.status).to.equal(409);
+            done();
+          });
+      });
   });
 
   describe('Get All Users GET: /api/users', () => {
@@ -73,7 +103,7 @@ describe('User Suite', () => {
           .end((err, res) => {
             if (err) return done(err);
             expect(res.status).to.equal(200);
-            expect(res.body.count).to.equal(2);
+            expect(res.body.count).to.equal(3);
             expect(res.body.users[0].firstName).to.equal(secondUser.firstName);
             done();
           });
@@ -87,7 +117,7 @@ describe('User Suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
-          expect(res.body.count).to.equal(2);
+          expect(res.body.count).to.equal(3);
           expect(res.body.users[0].firstName).to.equal(secondUser.firstName);
           done();
         });
@@ -243,14 +273,26 @@ describe('User Suite', () => {
 
     it('should return an error when trying to delete the admin', (done) => {
       request
-        .delete(`/api/users/${adminUser.id}`)
+        .delete(`/api/users/${secondAdmin.id}`)
         .set('Authorization', token)
         .end((err, res) => {
           if (err) return done(err);
-          expect(res.status).to.equal(403);
+          expect(res.status).to.equal(200);
           done();
         });
     });
+
+    it('should return an error when trying to delete the last admin',
+      (done) => {
+        request
+          .delete(`/api/users/${adminUser.id}`)
+          .set('Authorization', token)
+          .end((err, res) => {
+            if (err) return done(err);
+            expect(res.status).to.equal(403);
+            done();
+          });
+      });
 
     it('should delete another user if the user has a role admin', (done) => {
       request

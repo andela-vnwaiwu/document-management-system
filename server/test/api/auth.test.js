@@ -19,6 +19,7 @@ describe('Auth Suite', () => {
     roleParams = factory.adminRole;
     db.Role.create(roleParams).then((role) => {
       userParams.RoleId = role.id;
+      factory.secondAdmin.RoleId = role.id;
       done();
     });
     wrongUser = factory.wrongUser;
@@ -64,6 +65,18 @@ describe('Auth Suite', () => {
         request
           .post('/api/users/signup')
           .send(userParams)
+          .end((err, res) => {
+            if (err) return done(err);
+            expect(res.status).to.equal(409);
+            done();
+          });
+      });
+
+    it('returns an error if a normal user wants to signup as another admin',
+      (done) => {
+        request
+          .post('/api/users/signup')
+          .send(factory.secondAdmin)
           .end((err, res) => {
             if (err) return done(err);
             expect(res.status).to.equal(409);
