@@ -30,7 +30,7 @@ const Documents = {
     const roleId = req.decoded.RoleId;
     const query = {};
     query.limit = (req.query.limit > 0) ? req.query.limit : null;
-    query.offset = (req.query.page - 1 > 0) ? req.query.page - 1 : null;
+    query.offset = (req.query.offset > 0) ? req.query.offset : null;
     query.order = [['createdAt', 'DESC']];
 
     db.Role.findById(roleId).then((role) => {
@@ -42,9 +42,14 @@ const Documents = {
         if (result.count < 1) {
           return res.status(404).json({ message: 'No document found' });
         }
+        const offset = query.offset;
+        const limit = query.limit;
 
+        const pagination = DocumentHelper.paginateResult(result, offset, limit);
         return res.status(200)
-          .json({ result: result.rows, count: result.count });
+          .json({ result: result.rows,
+            count: result.count,
+            pagination });
       });
     });
   },
@@ -127,7 +132,7 @@ const Documents = {
     const roleId = req.decoded.RoleId;
     const query = {};
     query.limit = (req.query.limit > 0) ? req.query.limit : null;
-    query.offset = (req.query.page - 1 > 0) ? req.query.page - 1 : null;
+    query.offset = (req.query.offset > 0) ? req.query.offset : null;
     query.order = [['createdAt', 'DESC']];
 
     db.Role.findById(roleId).then((role) => {
@@ -142,8 +147,17 @@ const Documents = {
             return res.status(404).json({ message: 'No documents found' });
           }
 
+          const offset = query.offset;
+          const limit = query.limit;
+
+          const pagination = DocumentHelper.paginateResult(result, offset, limit);
+
           return res.status(200)
-            .json({ result: result.rows, count: result.count });
+            .json({
+              result: result.rows,
+              count: result.count,
+              pagination
+            });
         })
         .catch(error => ErrorHandler.processError(res, 500, error));
       }

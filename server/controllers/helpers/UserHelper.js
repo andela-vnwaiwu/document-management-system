@@ -22,6 +22,13 @@ const UserHelper = {
     return attributes;
   },
 
+  /**
+   * @desc SearchUSerResult search users result from query
+   * @param {Object} result object containing result from database
+   * @param {String} key string  property from result
+   * @param {String} value string value to search for in result
+   * @returns {Boolean} true if value is found else returns false
+   */
   searchUserResult(result, key, value) {
     return result.some((hasEmail) => {
       const obj = hasEmail.dataValues;

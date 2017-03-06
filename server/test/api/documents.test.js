@@ -191,7 +191,7 @@ describe('Document suite', () => {
 
     it('should limit and paginate the result shown', (done) => {
       request
-        .get('/api/documents?limit=1&page=1')
+        .get('/api/documents?limit=1&offset=1')
         .set('authorization', token)
         .end((err, res) => {
           expect(res.status).to.equal(200);
@@ -204,7 +204,7 @@ describe('Document suite', () => {
 
     it('should return the result for the other page', (done) => {
       request
-        .get('/api/documents?limit=1&page=2')
+        .get('/api/documents?limit=1&offset=1')
         .set('authorization', token)
         .end((err, res) => {
           expect(res.status).to.equal(200);
@@ -402,7 +402,7 @@ describe('Document suite', () => {
 
     it('returns all documents that belongs to a user', (done) => {
       request
-        .get(`/api/users/${userResult.id}/documents?limit=2&page=1`)
+        .get(`/api/users/${userResult.id}/documents?limit=2&offset=1`)
         .set('authorization', secondToken)
         .end((err, res) => {
           if (err) return done(err);
@@ -415,7 +415,7 @@ describe('Document suite', () => {
 
     it('returns all documents that belongs to a user to the admin', (done) => {
       request
-        .get(`/api/users/${userResult.id}/documents?limit=2&page=2`)
+        .get(`/api/users/${userResult.id}/documents?limit=2&offset=2`)
         .set('authorization', token)
         .end((err, res) => {
           if (err) return done(err);
@@ -444,7 +444,7 @@ describe('Document suite', () => {
         .end((err, res) => {
           thirdToken = res.body.token;
           request
-            .get(`/api/users/${userResult.id}/documents?limit=2&page1`)
+            .get(`/api/users/${userResult.id}/documents?limit=2&offset1`)
             .set('authorization', thirdToken)
             .end((err, res) => {
               if (err) return done(err);

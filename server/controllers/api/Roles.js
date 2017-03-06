@@ -1,6 +1,7 @@
 /* eslint import/no-unresolved: 0 */
 import db from '../../models/';
 import ErrorHandler from '../helpers/ErrorHandler';
+import DocumentHelper from '../helpers/DocumentHelper';
 
 const Roles = {
   /**
@@ -51,12 +52,22 @@ const Roles = {
   getAll(req, res) {
     const query = {};
     query.limit = (req.query.limit > 0) ? req.query.limit : null;
-    query.offset = (req.query.page - 1 > 0) ? req.query.page - 1 : null;
+    query.offset = (req.query.offset > 0) ? req.query.offset : null;
     query.order = [['createdAt', 'DESC']];
 
     db.Role.findAndCountAll(query)
-      .then(result => res.status(200)
-        .json({ result: result.rows, count: result.count }))
+      .then((result) => {
+        const offset = query.offset;
+        const limit = query.limit;
+
+        const pagination = DocumentHelper.paginateResult(result, offset, limit);
+        return res.status(200)
+          .json({
+            result: result.rows,
+            count: result.count,
+            pagination
+          });
+      })
       .catch(error => ErrorHandler.processError(res, 500, error));
   },
 

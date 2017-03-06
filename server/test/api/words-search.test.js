@@ -84,7 +84,7 @@ describe('Search Suite', () => {
     (done) => {
       const queryParams = 'and';
       request
-        .get(`/api/documents/search?text=${queryParams}&limit=2&page=2`)
+        .get(`/api/documents/search?text=${queryParams}&limit=2&offset=1`)
         .set('authorization', token)
         .end((err, res) => {
           if (err) return done(err);
@@ -126,13 +126,13 @@ describe('Search Suite', () => {
     (done) => {
       const queryParams = 'computer';
       request
-        .get(`/api/documents/search?text=${queryParams}&limit=2&page=2`)
+        .get(`/api/documents/search?text=${queryParams}&limit=1`)
         .set('authorization', userToken)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
           expect(res.body.count).to.equal(1);
-          expect(res.body.result.length).to.equal(0);
+          expect(res.body.result.length).to.equal(1);
           done();
         });
     });

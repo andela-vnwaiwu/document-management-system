@@ -125,7 +125,7 @@ describe('Roles Suite', () => {
   describe('Get All Roles GET: /api/roles', () => {
     it('returns all the roles with pagination', (done) => {
       request
-        .get('/api/roles?limit=2&page=1')
+        .get('/api/roles?limit=2&offset=1')
         .set('authorization', adminToken)
         .end((err, res) => {
           if (err) return done(err);
@@ -138,7 +138,7 @@ describe('Roles Suite', () => {
 
     it('returns all the roles in the second page with pagination', (done) => {
       request
-        .get('/api/roles?limit=2&page=3')
+        .get('/api/roles?limit=2&offset=2')
         .set('authorization', adminToken)
         .end((err, res) => {
           if (err) return done(err);

@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import db from '../../models/';
 import ErrorHandler from '../helpers/ErrorHandler';
 import UserHelper from '../helpers/UserHelper';
+import DocumentHelper from '../helpers/DocumentHelper';
 
 const secretKey = process.env.JWT_SECRET_KEY || 'jhebefuehf7yu3832978ry09iofe';
 
@@ -97,12 +98,21 @@ const Users = {
     const query = {};
     query.attributes = ['id', 'username', 'firstName', 'lastName', 'email',
       'RoleId', 'createdAt', 'updatedAt'];
-    query.limit = req.query.limit || null;
-    query.offset = req.query.offset || null;
+    query.limit = (req.query.limit > 0) ? req.query.limit : null;
+    query.offset = (req.query.offset > 0) ? req.query.offset : null;
     query.order = [['createdAt', 'DESC']];
 
     db.User.findAndCountAll(query).then((result) => {
-      return res.status(200).json({ users: result.rows, count: result.count });
+      const offset = query.offset;
+      const limit = query.limit;
+
+      const pagination = DocumentHelper.paginateResult(result, offset, limit);
+      return res.status(200)
+        .json({
+          users: result.rows,
+          count: result.count,
+          pagination
+        });
     });
   },
 

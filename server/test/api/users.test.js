@@ -112,13 +112,13 @@ describe('User Suite', () => {
     it(`should successfully get all users if the user has
         admin role with pagination`, (done) => {
       request
-        .get('/api/users?limit=2&page=1')
+        .get('/api/users?limit=2&offset=1')
         .set('authorization', token)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
           expect(res.body.count).to.equal(3);
-          expect(res.body.users[0].firstName).to.equal(secondUser.firstName);
+          expect(res.body.users[0].firstName).to.equal(secondAdmin.firstName);
           done();
         });
     });

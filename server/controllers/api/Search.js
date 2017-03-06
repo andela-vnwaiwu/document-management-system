@@ -1,6 +1,7 @@
 /* eslint import/no-unresolved: 0 */
 import db from '../../models/';
 import ErrorHandler from '../helpers/ErrorHandler';
+import DocumentHelper from '../helpers/DocumentHelper';
 
 const Search = {
   /**
@@ -15,7 +16,7 @@ const Search = {
     const searchTerm = req.query.text;
     const query = {};
     query.limit = (req.query.limit > 0) ? req.query.limit : null;
-    query.offset = (req.query.page - 1 > 0) ? req.query.page - 1 : null;
+    query.offset = (req.query.offset > 0) ? req.query.offset : null;
     query.order = [['createdAt', 'DESC']];
 
     db.Role.findById(roleId).then((role) => {
@@ -37,8 +38,16 @@ const Search = {
           return res.status(404).json({ message: 'No matching result' });
         }
 
+        const offset = query.offset;
+        const limit = query.limit;
+
+        const pagination = DocumentHelper.paginateResult(result, offset, limit);
         return res.status(200)
-          .json({ result: result.rows, count: result.count });
+          .json({
+            result: result.rows,
+            count: result.count,
+            pagination
+          });
       })
       .catch(error => ErrorHandler.processError(res, 500, error));
     })
