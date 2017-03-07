@@ -254,10 +254,10 @@ describe('User Suite', () => {
           .end((err, res) => {
             if (err) return done(err);
             expect(res.status).to.equal(200);
-            expect(res.body.user.RoleId).to.equal(userDetails.RoleId)
+            expect(res.body.user.RoleId).to.equal(userDetails.RoleId);
             done();
           });
-    });
+      });
   });
 
   describe('Delete User DELETE: /api/users/:id', () => {
