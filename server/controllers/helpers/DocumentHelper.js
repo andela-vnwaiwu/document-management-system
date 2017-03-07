@@ -34,7 +34,7 @@ const DocumentHelper = {
 
     paginatedResult.currentPage = Math.floor(offset / limit) + 1;
     paginatedResult.pageCount = Math.ceil(result.count / limit);
-    paginatedResult.pageSize = limit;
+    paginatedResult.pageSize = Number(limit);
     paginatedResult.totalCount = result.count;
 
     return paginatedResult;
