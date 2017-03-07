@@ -103,7 +103,7 @@ describe('User Suite', () => {
           .end((err, res) => {
             if (err) return done(err);
             expect(res.status).to.equal(200);
-            expect(res.body.count).to.equal(3);
+            expect(res.body.pagination.totalCount).to.equal(3);
             expect(res.body.users[0].firstName).to.equal(secondUser.firstName);
             done();
           });
@@ -117,7 +117,7 @@ describe('User Suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
-          expect(res.body.count).to.equal(3);
+          expect(res.body.pagination.totalCount).to.equal(3);
           expect(res.body.users[0].firstName).to.equal(secondAdmin.firstName);
           done();
         });
@@ -243,6 +243,20 @@ describe('User Suite', () => {
           expect(res.status).to.equal(403);
           done();
         });
+    });
+
+    it('does not change their role when a regular user tries to update their roles',
+      (done) => {
+        request
+          .put(`/api/users/${userDetails.id}`)
+          .set('authorization', secondToken)
+          .send({ RoleId: adminRole.id })
+          .end((err, res) => {
+            if (err) return done(err);
+            expect(res.status).to.equal(200);
+            expect(res.body.user.RoleId).to.equal(userDetails.RoleId)
+            done();
+          });
     });
   });
 

@@ -184,7 +184,7 @@ describe('Document suite', () => {
         .end((err, res) => {
           expect(res.status).to.equal(200);
           expect(res.body.length).to.be.defined;
-          expect(res.body.count).to.equal(2);
+          expect(res.body.pagination.totalCount).to.equal(2);
           done();
         });
     });
@@ -196,7 +196,7 @@ describe('Document suite', () => {
         .end((err, res) => {
           expect(res.status).to.equal(200);
           expect(res.body.length).to.be.defined;
-          expect(res.body.count).to.equal(2);
+          expect(res.body.pagination.totalCount).to.equal(2);
           expect(res.body.result.length).to.equal(1);
           done();
         });
@@ -209,8 +209,24 @@ describe('Document suite', () => {
         .end((err, res) => {
           expect(res.status).to.equal(200);
           expect(res.body.length).to.be.defined;
-          expect(res.body.count).to.equal(2);
+          expect(res.body.pagination.totalCount).to.equal(2);
           expect(res.body.result.length).to.equal(1);
+          expect(res.body.result[0].isPublic).to.be.true;
+          done();
+        });
+    });
+
+    it('should return the result and the pagination metadata', (done) => {
+      request
+        .get('/api/documents?limit=1&offset=1')
+        .set('authorization', token)
+        .end((err, res) => {
+          expect(res.status).to.equal(200);
+          expect(res.body.length).to.be.defined;
+          expect(res.body.pagination.pageSize).to.equal(1);
+          expect(res.body.pagination.totalCount).to.equal(2);
+          expect(res.body.pagination.pageCount).to.equal(2);
+          expect(res.body.pagination.currentPage).to.equal(2);
           expect(res.body.result[0].isPublic).to.be.true;
           done();
         });
@@ -407,7 +423,7 @@ describe('Document suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
-          expect(res.body.count).to.equal(4);
+          expect(res.body.pagination.totalCount).to.equal(4);
           expect(res.body.result.length).to.equal(2);
           done();
         });
@@ -420,7 +436,7 @@ describe('Document suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
-          expect(res.body.count).to.equal(4);
+          expect(res.body.pagination.totalCount).to.equal(4);
           expect(res.body.result.length).to.equal(2);
           done();
         });
@@ -449,7 +465,7 @@ describe('Document suite', () => {
             .end((err, res) => {
               if (err) return done(err);
               expect(res.status).to.equal(200);
-              expect(res.body.count).to.equal(3);
+              expect(res.body.pagination.totalCount).to.equal(3);
               expect(res.body.result.length).to.equal(2);
               done();
             });

@@ -130,7 +130,7 @@ describe('Roles Suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
-          expect(res.body.count).to.equal(3);
+          expect(res.body.pagination.totalCount).to.equal(3);
           expect(res.body.result.length).to.equal(2);
           done();
         });
@@ -143,7 +143,7 @@ describe('Roles Suite', () => {
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
-          expect(res.body.count).to.equal(3);
+          expect(res.body.pagination.totalCount).to.equal(3);
           expect(res.body.result.length).to.equal(1);
           done();
         });
