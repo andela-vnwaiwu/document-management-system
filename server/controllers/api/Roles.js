@@ -51,8 +51,8 @@ const Roles = {
   */
   getAll(req, res) {
     const query = {};
-    query.limit = (req.query.limit > 0) ? req.query.limit : null;
-    query.offset = (req.query.offset > 0) ? req.query.offset : null;
+    query.limit = (req.query.limit > 0) ? req.query.limit : 5;
+    query.offset = (req.query.offset > 0) ? req.query.offset : 0;
     query.order = [['createdAt', 'DESC']];
 
     db.Role.findAndCountAll(query)
@@ -62,11 +62,7 @@ const Roles = {
 
         const pagination = DocumentHelper.paginateResult(result, offset, limit);
         return res.status(200)
-          .json({
-            result: result.rows,
-            count: result.count,
-            pagination
-          });
+          .json({ result: result.rows, pagination });
       })
       .catch(error => ErrorHandler.processError(res, 500, error));
   },

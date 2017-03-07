@@ -98,8 +98,8 @@ const Users = {
     const query = {};
     query.attributes = ['id', 'username', 'firstName', 'lastName', 'email',
       'RoleId', 'createdAt', 'updatedAt'];
-    query.limit = (req.query.limit > 0) ? req.query.limit : null;
-    query.offset = (req.query.offset > 0) ? req.query.offset : null;
+    query.limit = (req.query.limit > 0) ? req.query.limit : 5;
+    query.offset = (req.query.offset > 0) ? req.query.offset : 0;
     query.order = [['createdAt', 'DESC']];
 
     db.User.findAndCountAll(query).then((result) => {
@@ -108,11 +108,7 @@ const Users = {
 
       const pagination = DocumentHelper.paginateResult(result, offset, limit);
       return res.status(200)
-        .json({
-          users: result.rows,
-          count: result.count,
-          pagination
-        });
+        .json({ users: result.rows, pagination });
     });
   },
 
