@@ -5,6 +5,7 @@
 import 'babel-polyfill';
 import httpMocks from 'node-mocks-http';
 import chai from 'chai';
+import spies from 'chai-spies';
 import events from 'events';
 import supertest from 'supertest';
 import app from '../../app';
@@ -13,8 +14,14 @@ import sampleDoc from '../helpers/documents.helper';
 import db from '../../models/';
 import authenticate from '../../middlewares/authenticate';
 
+chai.use(spies);
+const next = () => {
+  return true;
+};
+
 const expect = chai.expect;
 const agent = supertest(app);
+const spy = chai.spy(next);
 
 const buildResponse = () => {
   return httpMocks.createResponse({ eventEmitter: events.EventEmitter });
@@ -80,6 +87,21 @@ describe('Middleware Unit Test', () => {
 
       authenticate.verifyToken(request, response);
     });
+
+    it('calls the next function if the token is valid', (done) => {
+      const response = buildResponse();
+      const request = httpMocks.createRequest({
+        method: 'POST',
+        url: '/api/users/login',
+        headers: { authorization: token }
+      });
+
+      expect(spy()).to.equal(true);
+      expect(spy).to.have.been.called();
+      done();
+
+      authenticate.verifyToken(request, response, next);
+    });
   });
 
   describe('IsAdmin Suite', () => {
@@ -107,6 +129,22 @@ describe('Middleware Unit Test', () => {
       });
 
       authenticate.isAdmin(request, response);
+    });
+
+    it('calls the next function if the user is an admin', (done) => {
+      const response = buildResponse();
+      const request = httpMocks.createRequest({
+        method: 'GET',
+        url: '/api/users/',
+        headers: { authorization: token },
+        decoded: { RoleId: 1 }
+      });
+
+      expect(spy()).to.equal(true);
+      expect(spy).to.have.been.called();
+      done();
+
+      authenticate.isAdmin(request, response, next);
     });
   });
 
@@ -138,13 +176,31 @@ describe('Middleware Unit Test', () => {
 
       authenticate.userPermission(request, response);
     });
+
+    it('calls the next function if the user is the owner', (done) => {
+      const response = buildResponse();
+      const request = httpMocks.createRequest({
+        method: 'PUT',
+        url: '/api/users/2',
+        headers: { authorization: userToken },
+        decoded: { userId: 3, RoleId: 2 },
+        params: { id: 2 },
+        body: { username: 'bimpe' }
+      });
+
+      expect(spy()).to.equal(true);
+      expect(spy).to.have.been.called();
+      done();
+
+      authenticate.userPermission(request, response, next);
+    });
   });
 
   describe('ViewPermission Suite', () => {
     before((done) => {
       agent.post('/api/documents')
         .send(sampleDoc.third)
-        .set('authorization', token)
+        .set('authorization', userToken)
         .end((err, res) => {
           done();
         });
@@ -168,6 +224,23 @@ describe('Middleware Unit Test', () => {
 
       authenticate.viewPermission(request, response);
     });
+
+    it('calls the next function if the user is the owner', (done) => {
+      const response = buildResponse();
+      const request = httpMocks.createRequest({
+        method: 'GET',
+        url: '/api/documents/1',
+        headers: { authorization: userToken },
+        decoded: { userId: 2, RoleId: 2 },
+        params: { id: 1 }
+      });
+
+      expect(spy()).to.equal(true);
+      expect(spy).to.have.been.called();
+      done();
+
+      authenticate.viewPermission(request, response, next);
+    });
   });
 
   describe('DocPermission Suite', () => {
@@ -189,6 +262,24 @@ describe('Middleware Unit Test', () => {
       });
 
       authenticate.docPermission(request, response);
+    });
+
+    it('calls the next function if the user is the owner', (done) => {
+      const response = buildResponse();
+      const request = httpMocks.createRequest({
+        method: 'PUT',
+        url: '/api/documents/1',
+        headers: { authorization: userToken },
+        decoded: { userId: 2, RoleId: 2 },
+        params: { id: 1 },
+        body: { title: 'money' }
+      });
+
+      expect(spy()).to.equal(true);
+      expect(spy).to.have.been.called();
+      done();
+
+      authenticate.docPermission(request, response, next);
     });
   });
 });
