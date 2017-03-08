@@ -97,6 +97,12 @@ Technologies Used in the development of this api include the following
    [express]: <http://expressjs.com/>
    [mocha]: <https://mochajs.org/>
    [npm-run-all]: <https://www.npmjs.com/package/npm-run-all>
+
+#### *Limitations*
+The limitations of the API are:
+* Users cannot delete themselves using the API
+* Documents are not unique (A user can create a document with the same title)
+* Users logging out is dependent on the time the token expires
    
 # LICENSE
  © `Victor Nwaiwu`
