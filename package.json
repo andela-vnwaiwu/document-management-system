@@ -103,6 +103,7 @@
     "mocha": "^3.2.0",
     "node-mocks-http": "^1.6.1",
     "npm-run-all": "^4.0.1",
+    "sinon": "^1.17.7",
     "style-loader": "^0.13.1"
   }
 }

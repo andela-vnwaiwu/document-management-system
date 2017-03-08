@@ -2,10 +2,11 @@
 /* eslint import/no-unresolved: 0 */
 /* eslint no-unused-vars: [2, { "args": "none" }] */
 /* eslint no-underscore-dangle: 0 */
+/* eslint no-unused-expressions: 0 */
 import 'babel-polyfill';
 import httpMocks from 'node-mocks-http';
 import chai from 'chai';
-import spies from 'chai-spies';
+import sinon from 'sinon';
 import events from 'events';
 import supertest from 'supertest';
 import app from '../../app';
@@ -14,14 +15,8 @@ import sampleDoc from '../helpers/documents.helper';
 import db from '../../models/';
 import authenticate from '../../middlewares/authenticate';
 
-chai.use(spies);
-const next = () => {
-  return true;
-};
-
 const expect = chai.expect;
 const agent = supertest(app);
-const spy = chai.spy(next);
 
 const buildResponse = () => {
   return httpMocks.createResponse({ eventEmitter: events.EventEmitter });
@@ -57,50 +52,69 @@ describe('Middleware Unit Test', () => {
   });
 
   describe('VerifyToken Suite', () => {
-    it('returns an error if valid token is not passed', (done) => {
+    it('returns an error if valid token is not passed', () => {
       const response = buildResponse();
       const request = httpMocks.createRequest({
-        method: 'POST',
-        url: '/api/users/login',
+        method: 'GET',
+        url: '/api/users',
       });
+
+      authenticate.verifyToken(request, response);
 
       response.on('end', () => {
         expect(response._getData().message).to.equal('Unauthorized Access');
-        done();
       });
-
-      authenticate.verifyToken(request, response);
     });
 
-    it('returns an error if a wrong token is passed', (done) => {
+    it('returns an error if a wrong token is passed', () => {
       const response = buildResponse();
       const request = httpMocks.createRequest({
-        method: 'POST',
-        url: '/api/users/login',
+        method: 'GET',
+        url: '/api/users',
         headers: { authorization: 'ueyufhjkhfqwy783r2-3q09rygeff809r09r3.jjf' }
       });
 
+      authenticate.verifyToken(request, response);
+
       response.on('end', () => {
         expect(response._getData().message).to.equal('Invalid Token');
-        done();
       });
-
-      authenticate.verifyToken(request, response);
     });
 
-    it('calls the next function if the token is valid', (done) => {
+    it('should not call the next function if the token is invalid', () => {
       const response = buildResponse();
       const request = httpMocks.createRequest({
-        method: 'POST',
-        url: '/api/users/login',
+        method: 'GET',
+        url: '/api/users',
+        headers: { authorization: 'hwefb23r90piru82um233.bhfvi32of2o.jf2ieoi' }
+      });
+
+      const middlewareStub = {
+        callback: () => {}
+      };
+
+      sinon.spy(middlewareStub, 'callback');
+
+      authenticate.verifyToken(request, response, middlewareStub.callback);
+      expect(middlewareStub.callback).not.to.have.been.called;
+    });
+
+    it('calls the next function if the token is valid', () => {
+      const response = buildResponse();
+      const request = httpMocks.createRequest({
+        method: 'GET',
+        url: '/api/users',
         headers: { authorization: token }
       });
 
-      expect(spy()).to.equal(true);
-      expect(spy).to.have.been.called();
-      done();
+      const middlewareStub = {
+        callback: () => {}
+      };
 
-      authenticate.verifyToken(request, response, next);
+      sinon.spy(middlewareStub, 'callback');
+
+      authenticate.verifyToken(request, response, middlewareStub.callback);
+      expect(middlewareStub.callback).to.have.been.called;
     });
   });
 
@@ -123,15 +137,34 @@ describe('Middleware Unit Test', () => {
         decoded: { RoleId: 2 }
       });
 
+      authenticate.isAdmin(request, response);
+
       response.on('end', () => {
         expect(response._getData().message).to.equal('You are not an Admin');
         done();
       });
-
-      authenticate.isAdmin(request, response);
     });
 
-    it('calls the next function if the user is an admin', (done) => {
+    it('should not call the next function if the user is not the admin', () => {
+      const response = buildResponse();
+      const request = httpMocks.createRequest({
+        method: 'GET',
+        url: '/api/users',
+        headers: { authorization: 'hwefb23r90piru82um233.bhfvi32of2o.jf2ieoi' },
+        decoded: { RoleId: 2 }
+      });
+
+      const middlewareStub = {
+        callback: () => {}
+      };
+
+      sinon.spy(middlewareStub, 'callback');
+
+      authenticate.isAdmin(request, response, middlewareStub.callback);
+      expect(middlewareStub.callback).not.to.have.been.called;
+    });
+
+    it('calls the next function if the user is an admin', () => {
       const response = buildResponse();
       const request = httpMocks.createRequest({
         method: 'GET',
@@ -140,11 +173,14 @@ describe('Middleware Unit Test', () => {
         decoded: { RoleId: 1 }
       });
 
-      expect(spy()).to.equal(true);
-      expect(spy).to.have.been.called();
-      done();
+      const middlewareStub = {
+        callback: () => {}
+      };
 
-      authenticate.isAdmin(request, response, next);
+      sinon.spy(middlewareStub, 'callback');
+
+      authenticate.isAdmin(request, response, middlewareStub.callback);
+      expect(middlewareStub.callback).to.have.been.called;
     });
   });
 
@@ -169,15 +205,36 @@ describe('Middleware Unit Test', () => {
         body: { username: 'johnny' }
       });
 
+      authenticate.userPermission(request, response);
+
       response.on('end', () => {
         expect(response._getData().message).to.equal('You are not the owner');
         done();
       });
-
-      authenticate.userPermission(request, response);
     });
 
-    it('calls the next function if the user is the owner', (done) => {
+    it('should not call the next function if the user is not the owner', () => {
+      const response = buildResponse();
+      const request = httpMocks.createRequest({
+        method: 'PUT',
+        url: '/api/users/2',
+        headers: { authorization: thirdToken },
+        decoded: { userId: 3, RoleId: 2 },
+        params: { id: 2 },
+        body: { username: 'johnny' }
+      });
+
+      const middlewareStub = {
+        callback: () => {}
+      };
+
+      sinon.spy(middlewareStub, 'callback');
+
+      authenticate.userPermission(request, response, middlewareStub.callback);
+      expect(middlewareStub.callback).not.to.have.been.called;
+    });
+
+    it('calls the next function if the user is the owner', () => {
       const response = buildResponse();
       const request = httpMocks.createRequest({
         method: 'PUT',
@@ -188,11 +245,14 @@ describe('Middleware Unit Test', () => {
         body: { username: 'bimpe' }
       });
 
-      expect(spy()).to.equal(true);
-      expect(spy).to.have.been.called();
-      done();
+      const middlewareStub = {
+        callback: () => {}
+      };
 
-      authenticate.userPermission(request, response, next);
+      sinon.spy(middlewareStub, 'callback');
+
+      authenticate.userPermission(request, response, middlewareStub.callback);
+      expect(middlewareStub.callback).to.have.been.called;
     });
   });
 
@@ -216,16 +276,36 @@ describe('Middleware Unit Test', () => {
         params: { id: 1 }
       });
 
+      authenticate.viewPermission(request, response);
+
       response.on('end', () => {
         expect(response._getData().message)
           .to.equal('You are not allowed to view this document');
         done();
       });
-
-      authenticate.viewPermission(request, response);
     });
 
-    it('calls the next function if the user is the owner', (done) => {
+    it('should not call the next function if the user is not the owner', () => {
+      const response = buildResponse();
+      const request = httpMocks.createRequest({
+        method: 'GET',
+        url: '/api/documents/1',
+        headers: { authorization: thirdToken },
+        decoded: { userId: 3, RoleId: 2 },
+        params: { id: 1 }
+      });
+
+      const middlewareStub = {
+        callback: () => {}
+      };
+
+      sinon.spy(middlewareStub, 'callback');
+
+      authenticate.userPermission(request, response, middlewareStub.callback);
+      expect(middlewareStub.callback).not.to.have.been.called;
+    });
+
+    it('calls the next function if the user is the owner', () => {
       const response = buildResponse();
       const request = httpMocks.createRequest({
         method: 'GET',
@@ -235,11 +315,14 @@ describe('Middleware Unit Test', () => {
         params: { id: 1 }
       });
 
-      expect(spy()).to.equal(true);
-      expect(spy).to.have.been.called();
-      done();
+      const middlewareStub = {
+        callback: () => {}
+      };
 
-      authenticate.viewPermission(request, response, next);
+      sinon.spy(middlewareStub, 'callback');
+
+      authenticate.viewPermission(request, response, middlewareStub.callback);
+      expect(middlewareStub.callback).to.have.been.called;
     });
   });
 
@@ -264,7 +347,7 @@ describe('Middleware Unit Test', () => {
       authenticate.docPermission(request, response);
     });
 
-    it('calls the next function if the user is the owner', (done) => {
+    it('should not call the next function if the user is not the owner', () => {
       const response = buildResponse();
       const request = httpMocks.createRequest({
         method: 'PUT',
@@ -275,11 +358,35 @@ describe('Middleware Unit Test', () => {
         body: { title: 'money' }
       });
 
-      expect(spy()).to.equal(true);
-      expect(spy).to.have.been.called();
-      done();
+      const middlewareStub = {
+        callback: () => {}
+      };
 
-      authenticate.docPermission(request, response, next);
+      sinon.spy(middlewareStub, 'callback');
+
+      authenticate.userPermission(request, response, middlewareStub.callback);
+      expect(middlewareStub.callback).not.to.have.been.called;
+    });
+
+    it('calls the next function if the user is the owner', () => {
+      const response = buildResponse();
+      const request = httpMocks.createRequest({
+        method: 'PUT',
+        url: '/api/documents/1',
+        headers: { authorization: userToken },
+        decoded: { userId: 2, RoleId: 2 },
+        params: { id: 1 },
+        body: { title: 'money' }
+      });
+
+      const middlewareStub = {
+        callback: () => {}
+      };
+
+      sinon.spy(middlewareStub, 'callback');
+
+      authenticate.docPermission(request, response, middlewareStub.callback);
+      expect(middlewareStub.callback).to.have.been.called;
     });
   });
 });
