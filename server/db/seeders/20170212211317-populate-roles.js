@@ -1,13 +1,11 @@
-'use strict';
-
 module.exports = {
-  up: function (queryInterface, Sequelize) {
+  up(queryInterface) {
     return queryInterface.bulkInsert('Roles', [{
       title: 'admin',
       createdAt: new Date(),
       updatedAt: new Date()
     }, {
-      title: 'owner',
+      title: 'manager',
       createdAt: new Date(),
       updatedAt: new Date()
     }, {
@@ -21,7 +19,7 @@ module.exports = {
     }]);
   },
 
-  down: function (queryInterface, Sequelize) {
+  down(queryInterface) {
     return queryInterface.bulkDelete('Roles', null, {});
   }
 };

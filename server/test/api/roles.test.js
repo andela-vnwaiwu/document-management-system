@@ -7,36 +7,46 @@ import dotenv from 'dotenv';
 import 'babel-polyfill';
 import chai from 'chai';
 import supertest from 'supertest';
-import app from '../app';
-import factory from './helpers/factory.helpers';
-// import sampleDoc from './helpers/documents.helper';
-import db from '../models/';
+import app from '../../app';
+import factory from '../helpers/factory.helpers';
+import db from '../../models/';
 
 dotenv.config();
 
 const expect = chai.expect;
 const request = supertest(app);
 
+const roles = [
+  factory.adminRole,
+  factory.managerRole,
+  factory.regularRole,
+  factory.guestRole
+];
+
 describe('Roles Suite', () => {
-  let adminToken, newRole;
+  let user, adminToken, newRole, adminRole;
   before((done) => {
-    db.User.destroy({ where: {} }).then(() => {
-      db.Role.destroy({ where: { title: 'newRole' } }).then(() => {
-        request
-          .post('/api/users/signup')
-          .send(factory.users)
+    user = factory.users;
+    db.Role.bulkCreate(roles, {
+      returning: true
+    }).then((newRoles) => {
+      if (newRoles) {
+        adminRole = newRoles[0];
+        user.roleId = adminRole.id;
+
+        request.post('/api/users/signup')
+          .send(user)
           .end((err, res) => {
-            if (err) return done(err);
             adminToken = res.body.token;
             done();
           });
-      });
+      }
     });
   });
 
   after((done) => {
-    db.Role.destroy({ where: { title: 'newRole' } }).then(() => {
-      db.User.destroy({ where: {} }).then(() => {
+    db.User.sequelize.sync({ force: true }).then(() => {
+      db.Role.sequelize.sync({ force: true }).then(() => {
         done();
       });
     });
@@ -55,6 +65,7 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role exists', (done) => {
       request
         .post('/api/roles')
@@ -66,12 +77,24 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
+    it('returns an error if no title is passed', (done) => {
+      request
+        .post('/api/roles')
+        .send({})
+        .set('authorization', adminToken)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(400);
+          done();
+        });
+    });
   });
 
   describe('Edit Role PUT: /api/roles/:id', () => {
     it('edits a role if the role exists', (done) => {
       request
-        .put(`/api/roles/${newRole.id}`)
+        .patch(`/api/roles/${newRole.role.id}`)
         .send({ title: 'changedRole' })
         .set('authorization', adminToken)
         .end((err, res) => {
@@ -80,9 +103,10 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role does not exists', (done) => {
       request
-        .put(`/api/roles/${newRole.id * 8}`)
+        .patch(`/api/roles/${newRole.role.id * 8}`)
         .send({ title: 'changedRole' })
         .set('authorization', adminToken)
         .end((err, res) => {
@@ -91,9 +115,10 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role is the admin role', (done) => {
       request
-        .put('/api/roles/1')
+        .patch('/api/roles/1')
         .send({ title: 'changedRole' })
         .set('authorization', adminToken)
         .end((err, res) => {
@@ -105,13 +130,28 @@ describe('Roles Suite', () => {
   });
 
   describe('Get All Roles GET: /api/roles', () => {
-    it('returns all the roles', (done) => {
+    it('returns all the roles with pagination', (done) => {
       request
-        .get('/api/roles')
+        .get('/api/roles?limit=2&offset=1')
         .set('authorization', adminToken)
         .end((err, res) => {
           if (err) return done(err);
           expect(res.status).to.equal(200);
+          expect(res.body.pagination.totalCount).to.equal(5);
+          expect(res.body.result.length).to.equal(2);
+          done();
+        });
+    });
+
+    it('returns all the roles in the second page with pagination', (done) => {
+      request
+        .get('/api/roles?limit=2&offset=2')
+        .set('authorization', adminToken)
+        .end((err, res) => {
+          if (err) return done(err);
+          expect(res.status).to.equal(200);
+          expect(res.body.pagination.totalCount).to.equal(5);
+          expect(res.body.result.length).to.equal(2);
           done();
         });
     });
@@ -120,7 +160,7 @@ describe('Roles Suite', () => {
   describe('Get A Role GET: /api/roles/:id', () => {
     it('returns a role if the role exists', (done) => {
       request
-        .get(`/api/roles/${newRole.id}`)
+        .get(`/api/roles/${newRole.role.id}`)
         .set('authorization', adminToken)
         .end((err, res) => {
           if (err) return done(err);
@@ -128,9 +168,10 @@ describe('Roles Suite', () => {
           done();
         });
     });
-    it('returns an error if the role does not exists', (done) => {
+
+    it('returns not found if the role does not exists', (done) => {
       request
-        .get(`/api/roles/${newRole.id * 8}`)
+        .get(`/api/roles/${newRole.role.id * 8}`)
         .set('authorization', adminToken)
         .end((err, res) => {
           if (err) return done(err);
@@ -143,7 +184,7 @@ describe('Roles Suite', () => {
   describe('Delete A Role DELETE: /api/roles/:id', () => {
     it('deletes a role if the role exists', (done) => {
       request
-        .delete(`/api/roles/${newRole.id}`)
+        .delete(`/api/roles/${newRole.role.id}`)
         .set('authorization', adminToken)
         .end((err, res) => {
           if (err) return done(err);
@@ -151,9 +192,10 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role does not exists', (done) => {
       request
-        .delete(`/api/roles/${newRole.id * 8}`)
+        .delete(`/api/roles/${newRole.role.id * 8}`)
         .set('authorization', adminToken)
         .end((err, res) => {
           if (err) return done(err);
@@ -161,6 +203,7 @@ describe('Roles Suite', () => {
           done();
         });
     });
+
     it('returns an error if the role is the admin role', (done) => {
       request
         .delete('/api/roles/1')

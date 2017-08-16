@@ -2,7 +2,7 @@
 /* eslint import/no-unresolved: 0 */
 import faker from 'faker';
 
-const documents = {
+module.exports = {
   first: {
     title: faker.lorem.words(),
     content: faker.lorem.paragraph(),
@@ -18,7 +18,7 @@ const documents = {
   third: {
     title: faker.lorem.words(),
     content: faker.lorem.paragraph(),
-    isPublic: false,
+    access: 'private',
     tags: ['fashion', 'clothes', 'women']
   },
 
@@ -43,9 +43,7 @@ const documents = {
       related non-executable data, such as online documentation or digital media.
       Computer hardware and software require each other and neither can be 
       realistically used on its own.`,
-    isPublic: false,
+    access: 'private',
     tags: ['programming', 'code', 'software', 'andela']
   }
 };
-
-export default documents;

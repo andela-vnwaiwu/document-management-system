@@ -1,7 +1,9 @@
 /* eslint import/no-unresolved: 0 */
 import db from '../../models/';
+import ErrorHandler from '../helpers/ErrorHandler';
+import DocumentHelper from '../helpers/DocumentHelper';
 
-const roles = {
+const Roles = {
   /**
   * Create Role
   * @param {Object} req Request object
@@ -17,12 +19,14 @@ const roles = {
       if (result) {
         return res.status(409).json({ message: 'Role already exists' });
       }
-      db.Role.create(req.body).then((role) => {
-        return res.status(201).json(role);
-      })
-      .catch((error) => {
-        return res.status(400).json(error);
-      });
+
+      db.Role.create(req.body)
+        .then(role => res.status(201).json({
+          status: 'created',
+          role
+        }))
+        .catch(() => res.status(400)
+          .json({ message: 'title cannot be empty ' }));
     });
   },
 
@@ -39,7 +43,8 @@ const roles = {
         return res.status(404).json({ message: 'Role not found' });
       }
       return res.status(200).json(result);
-    });
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   },
 
   /**
@@ -49,12 +54,21 @@ const roles = {
   * @returns {Object} - Returns response object
   */
   getAll(req, res) {
-    db.Role.findAll().then((result) => {
-      if (result < 1) {
-        return res.status(404).json({ message: 'Role not found' });
-      }
-      return res.status(200).json(result);
-    });
+    const query = {};
+    query.limit = (req.query.limit > 0) ? req.query.limit : 5;
+    query.offset = (req.query.offset > 0) ? req.query.offset : 0;
+    query.order = [['createdAt', 'DESC']];
+
+    db.Role.findAndCountAll(query)
+      .then((result) => {
+        const offset = query.offset;
+        const limit = query.limit;
+
+        const pagination = DocumentHelper.paginateResult(result, offset, limit);
+        return res.status(200)
+          .json({ result: result.rows, pagination });
+      })
+      .catch(error => ErrorHandler.processError(res, 500, error));
   },
 
   /**
@@ -73,11 +87,13 @@ const roles = {
         if (!role) {
           return res.status(404).json({ message: 'role not found to update' });
         }
-        role.update(req.body).then((updatedRole) => {
-          return res.status(200).json(updatedRole);
-        });
-      });
-    });
+        role.update(req.body)
+          .then(updatedRole => res.status(200)
+            .json({ updatedRole, message: 'role updated successfully' }));
+      })
+      .catch(error => ErrorHandler.processError(res, 500, error));
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   },
 
   /**
@@ -101,9 +117,11 @@ const roles = {
           return res.status(404).json({ message: 'No role found to delete' });
         }
         return res.status(200).json({ message: 'Role successfully deleted' });
-      });
-    });
+      })
+      .catch(error => ErrorHandler.processError(res, 500, error));
+    })
+    .catch(error => ErrorHandler.processError(res, 500, error));
   }
 };
 
-export default roles;
+export default Roles;

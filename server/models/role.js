@@ -1,5 +1,5 @@
 'use strict';
-module.exports = function (sequelize, DataTypes) {
+module.exports = function(sequelize, DataTypes) {
   var Role = sequelize.define('Role', {
     title: {
       allowNull: false,
@@ -7,18 +7,25 @@ module.exports = function (sequelize, DataTypes) {
       unique: true,
       validate: {
         notEmpty: {
+          args: true,
           msg: 'Title cannot be empty'
         }
       }
     }
   }, {
     classMethods: {
-      associate: function (models) {
+      associate: function(models) {
         Role.hasMany(models.User, {
-          foreignKey: 'RoleId'
+          foreignKey: 'roleId'
+        });
+
+        Role.belongsToMany(models.Permission, {
+          foreignKey: 'roleId',
+          through: 'RolePermission',
         })
       }
     }
   });
+
   return Role;
 };

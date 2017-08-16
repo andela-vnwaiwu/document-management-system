@@ -1,14 +1,24 @@
 const bcrypt = require('bcrypt-nodejs');
 
-module.exports = function (sequelize, DataTypes) {
+module.exports = function(sequelize, DataTypes) {
   var User = sequelize.define('User', {
+    email: {
+      allowNull: false,
+      type: DataTypes.STRING,
+      unique: true,
+      validate: {
+        isEmail: {
+          msg: 'Invalid email address provided'
+        }
+      }
+    },
     username: {
       allowNull: false,
       type: DataTypes.STRING,
       unique: true,
       validate: {
         notEmpty: {
-          msg: 'LastName cannot be empty'
+          msg: 'Username cannot be empty'
         }
       }
     },
@@ -17,7 +27,7 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.STRING,
       validate: {
         notEmpty: {
-          msg: 'LastName cannot be empty'
+          msg: 'FirstName cannot be empty'
         }
       }
     },
@@ -30,18 +40,7 @@ module.exports = function (sequelize, DataTypes) {
         }
       }
     },
-    email: {
-      allowNull: false,
-      type: DataTypes.STRING,
-      unique: true,
-      validate: {
-        isEmail:{
-          msg: 'Invalid email address provided'
-        }
-      }
-    },
     password: {
-      // allowNull: false,
       type: DataTypes.STRING,
       validate: {
         len: {
@@ -50,7 +49,7 @@ module.exports = function (sequelize, DataTypes) {
         }
       }
     },
-    RoleId: {
+    roleId: {
       allowNull: false,
       type: DataTypes.INTEGER,
       validate: {
@@ -61,16 +60,14 @@ module.exports = function (sequelize, DataTypes) {
     }
   }, {
     classMethods: {
-      associate: function (models) {
+      associate: function(models) {
         User.belongsTo(models.Role, {
           onDelete: 'CASCADE',
-          foreignKey: {
-            allowNull: false
-          }
+          foreignKey: 'roleId'
         });
 
         User.hasMany(models.Document, {
-          foreignKey: 'OwnerId'
+          foreignKey: 'ownerId'
         });
       }
     },

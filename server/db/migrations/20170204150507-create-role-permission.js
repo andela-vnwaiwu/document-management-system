@@ -1,16 +1,19 @@
 module.exports = {
   up(queryInterface, Sequelize) {
-    return queryInterface.createTable('Roles', {
+    return queryInterface.createTable('RolePermission', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      title: {
-        type: Sequelize.STRING,
-        unique: true,
-        allowNull: false,
+      roleId: {
+        type: Sequelize.INTEGER,
+        allowNull: false
+      },
+      permissionId: {
+        type: Sequelize.INTEGER,
+        allowNull: false
       },
       createdAt: {
         allowNull: false,
@@ -23,6 +26,6 @@ module.exports = {
     });
   },
   down(queryInterface, Sequelize) {
-    return queryInterface.dropTable('Roles');
+    return queryInterface.dropTable('RolePermission');
   }
 };

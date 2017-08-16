@@ -1,5 +1,5 @@
-module.exports = function (sequelize, DataTypes) {
-  var Document = sequelize.define('Document', {
+export default (sequelize, DataTypes) => {
+  const Document = sequelize.define('Document', {
     title: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -18,7 +18,7 @@ module.exports = function (sequelize, DataTypes) {
         }
       }
     },
-    OwnerId: {
+    ownerId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: {
@@ -27,23 +27,36 @@ module.exports = function (sequelize, DataTypes) {
         }
       }
     },
-    isPublic: {
-      defaultValue: true,
-      type: DataTypes.BOOLEAN
+    access: {
+      type: DataTypes.ENUM,
+      allowNull: false,
+      values: [
+        'public',
+        'private',
+        'role'
+      ],
+      validate: {
+        isIn: [[
+          'public',
+          'private',
+          'role'
+        ]]
+      },
+      defaultValue: 'public'
     },
     tags: {
       type: DataTypes.ARRAY(DataTypes.TEXT)
     }
   }, {
     classMethods: {
-      associate: function (models) {
+      associate: function(models) {
         Document.belongsTo(models.User, {
-          as: 'Owner',
           onDelete: 'CASCADE',
-          foreignKey: 'OwnerId'
+          foreignKey: 'ownerId'
         });
       }
     }
   });
+
   return Document;
 };
